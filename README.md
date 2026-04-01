@@ -1,6 +1,6 @@
 # Claude Code CN Plus
 
-Claude Code 中文汉化增强包 — 一键安装，全面汉化。
+Claude Code 中文汉化增强包 — 一键安装，全面汉化，自动维护。
 
 在 [cute-claude-hooks](https://github.com/gugug168/cute-claude-hooks) 基础上扩展，提供更完整的汉化覆盖。
 
@@ -8,8 +8,9 @@ Claude Code 中文汉化增强包 — 一键安装，全面汉化。
 
 | 功能 | 说明 |
 |------|------|
-| 界面汉化 | 配置面板、斜杠命令描述、快捷键提示、交互按钮等 |
-| 额外 UI 汉化 | 计划模式、权限对话框、插件推荐等交互界面 |
+| CLI 界面汉化 | 配置面板、斜杠命令描述、快捷键提示、交互按钮等（~186 条关键词 + 57 条 UI） |
+| 插件技能汉化 | superpowers、codex、document-skills 等插件的技能描述（70+ 条映射） |
+| 自动汉化 Hook | 检测插件/CLI 版本变化，自动重新汉化，无需手动干预 |
 | 工具提示 | 每次工具执行后显示中文解释（小白友好） |
 | 语言配置 | 自动设置 AI 使用中文回复 |
 | 一键安装/卸载 | 自动检测环境，备份恢复 |
@@ -48,7 +49,13 @@ bash uninstall.sh
 
 ## Claude Code 更新后
 
-Claude Code 更新后汉化会失效，重新运行即可：
+Claude Code 或插件更新后汉化会失效，有两种方式恢复：
+
+**方式 1：自动（推荐）**
+
+安装后已注册自动检测 Hook，新会话首次使用时自动检测版本变化并重新汉化。
+
+**方式 2：手动**
 
 ```bash
 cd claude-code-cn-plus
@@ -59,26 +66,54 @@ bash install.sh
 
 ```
 claude-code-cn-plus/
-├── install.sh                   # 一键安装脚本
+├── install.sh                   # 一键安装脚本（6 步流程）
 ├── uninstall.sh                 # 卸载脚本
 ├── localize/
-│   ├── localize.js              # 汉化引擎（基于 cute-claude-hooks）
-│   ├── keyword.js               # 关键词翻译字典（~160 条）
-│   └── extra-ui.js              # 额外安全 UI 翻译（~50 条）
+│   ├── localize.js              # CLI 汉化引擎（基于 cute-claude-hooks）
+│   ├── keyword.js               # CLI 关键词翻译字典（~186 条）
+│   ├── extra-ui.js              # 额外安全 UI 翻译（~57 条）
+│   ├── localize-plugins.js      # 插件技能描述汉化（70+ 条映射）
+│   └── auto-localize.js         # 版本检测 + 自动汉化引擎
 ├── hooks/
-│   └── tool-tips-post.sh        # 工具执行后中文提示
+│   ├── tool-tips-post.sh        # 工具执行后中文提示
+│   └── auto-localize.sh         # 自动汉化 Hook（版本变化检测）
 └── docs/
     └── lessons-learned.md       # 开发踩坑记录
 ```
 
 ## 汉化原理
 
-Claude Code 的 npm 版本将所有 UI 文本打包在 `cli.js` 中。本项目通过字符串替换实现汉化：
+### CLI 汉化
+
+Claude Code 的 npm 版本将所有 UI 文本打包在 `cli.js` 中。通过字符串替换实现汉化：
 
 1. **备份** — 首次运行时创建 `cli.bak.js` 备份
 2. **关键词替换** — 用 `keyword.js` 字典匹配 UI 字符串并替换为中文
 3. **额外 UI 替换** — 用 `extra-ui.js` 替换交互界面中的按钮、标签等
 4. **恢复基准** — 每次运行先从备份恢复，确保基于原始英文替换
+
+### 插件汉化
+
+已安装插件的 SKILL.md/command.md 中的 `description` 字段会被替换为中文。这些描述出现在 Claude Code 的斜杠命令菜单中。
+
+### 自动汉化
+
+通过 PostToolUse Hook 实现：
+1. 每个会话首次使用 Bash 工具时触发检测
+2. 对比 `localize-manifest.json` 中记录的版本与当前版本
+3. 版本变化时自动运行汉化脚本并更新清单
+4. 后台执行，不阻塞正常使用
+
+## 汉化覆盖范围
+
+| 类别 | 覆盖数 | 示例 |
+|------|--------|------|
+| CLI 配置面板 | ~40 条 | "主题" "模型" "输出风格" |
+| CLI 斜杠命令 | ~60 条 | "/compact" "/config" "/help" |
+| CLI 交互提示 | ~50 条 | "Enter 确认 · Esc 取消" |
+| CLI 额外 UI | ~57 条 | "不再询问" "保存到文件" |
+| 插件技能描述 | 70+ 条 | superpowers、codex、document-skills 等 |
+| **总计** | **~560+ 处替换** | |
 
 ## 安全原则
 
@@ -86,6 +121,7 @@ Claude Code 的 npm 版本将所有 UI 文本打包在 `cli.js` 中。本项目�
 
 - **不翻译短字符串** — `"None"`, `"Default"` 等会出现在代码逻辑中，替换会破坏运行
 - **不翻译非 UI 上下文字符串** — 如 `"Do you want to proceed?"` 在代码中有非 UI 用途
+- **不翻译插件正文内容** — SKILL.md 正文是 Claude 的行为指令，翻译会导致理解偏差
 - **使用 `str.replace()` 而非位置替换** — 正则位置替换在多次匹配时会产生偏移错乱
 - **逐个测试每条翻译** — 每新增一条翻译都要验证 cli.js 仍能正常运行
 

@@ -8,8 +8,9 @@ Claude Code 中文汉化增强包 — 一键安装，全面汉化，自动维护
 
 | 功能 | 说明 |
 |------|------|
-| CLI 界面汉化 | 配置面板、斜杠命令描述、快捷键提示、交互按钮等（~186 条关键词 + 57 条 UI） |
-| 插件技能汉化 | superpowers、codex、document-skills 等插件的技能描述（70+ 条映射） |
+| CLI 界面汉化 | 配置面板、斜杠命令描述、快捷键提示、交互按钮等（~188 条关键词 + 57 条 UI） |
+| 插件技能汉化 | superpowers、codex、document-skills 等 52+ 个插件技能/命令描述 |
+| Translation Memory | 翻译记忆库独立存储，插件更新后自动恢复翻译，不再丢失 |
 | 自动汉化 Hook | 检测插件/CLI 版本变化，自动重新汉化，无需手动干预 |
 | 工具提示 | 每次工具执行后显示中文解释（小白友好） |
 | 语言配置 | 自动设置 AI 使用中文回复 |
@@ -70,13 +71,14 @@ claude-code-cn-plus/
 ├── uninstall.sh                 # 卸载脚本
 ├── localize/
 │   ├── localize.js              # CLI 汉化引擎（基于 cute-claude-hooks）
-│   ├── keyword.js               # CLI 关键词翻译字典（~186 条）
+│   ├── keyword.js               # CLI 关键词翻译字典（~188 条）
 │   ├── extra-ui.js              # 额外安全 UI 翻译（~57 条）
-│   ├── localize-plugins.js      # 插件技能描述汉化（70+ 条映射）
+│   ├── localize-plugins.js      # 插件汉化引擎 v3（Translation Memory）
+│   ├── translation-memory.json  # 翻译记忆库（独立于插件文件）
 │   └── auto-localize.js         # 版本检测 + 自动汉化引擎
 ├── hooks/
 │   ├── tool-tips-post.sh        # 工具执行后中文提示
-│   └── auto-localize.sh         # 自动汉化 Hook（版本变化检测）
+│   └── auto-localize.sh         # 自动汉化 Hook（三层回退策略）
 └── docs/
     └── lessons-learned.md       # 开发踩坑记录
 ```
@@ -92,9 +94,16 @@ Claude Code 的 npm 版本将所有 UI 文本打包在 `cli.js` 中。通过字�
 3. **额外 UI 替换** — 用 `extra-ui.js` 替换交互界面中的按钮、标签等
 4. **恢复基准** — 每次运行先从备份恢复，确保基于原始英文替换
 
-### 插件汉化
+### 插件汉化（Translation Memory 架构）
 
-已安装插件的 SKILL.md/command.md 中的 `description` 字段会被替换为中文。这些描述出现在 Claude Code 的斜杠命令菜单中。
+v3 采用 Translation Memory 架构，翻译结果持久化存储在 `translation-memory.json` 中，与插件文件解耦合：
+
+1. **扫描** — 自动扫描所有已安装插件的 SKILL.md 和 command.md
+2. **匹配** — 用 `name` 字段（跨版本稳定）查找翻译记忆库
+3. **替换** — 安全转义后写入 frontmatter 的 `description` 字段
+4. **恢复** — 插件更新覆盖文件后，自动从记忆库恢复翻译
+
+新增翻译只需编辑 `translation-memory.json`，无需修改代码。
 
 ### 自动汉化
 
@@ -109,11 +118,11 @@ Claude Code 的 npm 版本将所有 UI 文本打包在 `cli.js` 中。通过字�
 | 类别 | 覆盖数 | 示例 |
 |------|--------|------|
 | CLI 配置面板 | ~40 条 | "主题" "模型" "输出风格" |
-| CLI 斜杠命令 | ~60 条 | "/compact" "/config" "/help" |
+| CLI 斜杠命令 | ~62 条 | "/compact" "/config" "/insights" "/statusline" |
 | CLI 交互提示 | ~50 条 | "Enter 确认 · Esc 取消" |
 | CLI 额外 UI | ~57 条 | "不再询问" "保存到文件" |
-| 插件技能描述 | 70+ 条 | superpowers、codex、document-skills 等 |
-| **总计** | **~560+ 处替换** | |
+| 插件技能/命令描述 | 52+ 条 | superpowers、codex、document-skills 等 |
+| **总计** | **~570+ 处替换** | |
 
 ## 安全原则
 

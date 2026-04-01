@@ -197,5 +197,22 @@ module.exports = {
   'Number of tasks': '任务数量',
   'Command to time': '要计时的命令',
   'Command to run with nohup': '使用 nohup 运行的命令',
-  'Duration to wait before timing out (e.g., 10, 5s, 2m)': '超时前等待的持续时间（例如 10、5s、2m）'
+  'Duration to wait before timing out (e.g., 10, 5s, 2m)': '超时前等待的持续时间（例如 10、5s、2m）',
+
+  // ========== 新增：会话/模式/计划相关 ==========
+  'Advanced multi-agent plan mode with our most powerful model': '高级多代理计划模式，使用最强模型',
+  'Already in plan mode. No plan written yet.': '已在计划模式中。尚未编写计划。',
+  'Already in a worktree session': '已在 worktree 会话中',
+  'Auto mode is unavailable for your plan': '自动模式不适用于你的计划',
+  'Autocompact is disabled': '自动压缩已禁用',
+  'Autocompact is disabled. Use /compact to free space, or enable autocompact in /config.': '自动压缩已禁用。使用 /compact 释放空间，或在 /config 中启用自动压缩。',
+  'Agent Teams is not yet available on your plan.': 'Agent Teams 尚未对你的计划开放。',
+
+  // ========== 新增：配置/权限相关 ==========
+  'Before compacting, ask me what to preserve': '压缩前询问我要保留什么',
+  'Always run tests after code changes': '代码更改后始终运行测试',
+  'Allow npm commands without prompting': '允许 npm 命令无需确认',
+  'Ask Claude to create a todo list when working on complex tasks to track progress and remain on track': '在处理复杂任务时让 Claude 创建待办列表以跟踪进度',
+  'All changes and commits will be lost.': '所有更改和提交都将丢失。',
+  'Add funds to continue with extra usage': '充值以继续使用额外用量',
 }

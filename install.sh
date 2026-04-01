@@ -64,7 +64,10 @@ echo -e "${GREEN}✓${NC} Claude 配置目录: $CLAUDE_CONFIG_DIR"
 
 # ========== Step 1: 备份 ==========
 echo ""
-echo -e "${MAGENTA}[1/5] 备份原始文件...${NC}"
+echo -e "${MAGENTA}[1/6] 备份原始文件...${NC}"
+
+# 记录安装路径（供 auto-localize.sh 定位）
+echo "${SCRIPT_DIR}" > "${CLAUDE_CONFIG_DIR}/localize-install-path"
 
 if [ -f "$CLI_BAK" ]; then
     echo "  备份已存在，跳过"
@@ -75,7 +78,7 @@ fi
 
 # ========== Step 2: 运行关键词汉化 ==========
 echo ""
-echo -e "${MAGENTA}[2/5] 运行关键词汉化 (keyword.js)...${NC}"
+echo -e "${MAGENTA}[2/6] 运行关键词汉化 (keyword.js)...${NC}"
 
 # 先从备份恢复
 cp "$CLI_BAK" "$CLI_PATH"
@@ -86,13 +89,19 @@ node localize.js 2>&1 | tail -5
 
 # ========== Step 3: 叠加额外 UI 汉化 ==========
 echo ""
-echo -e "${MAGENTA}[3/5] 叠加额外 UI 汉化...${NC}"
+echo -e "${MAGENTA}[3/6] 叠加额外 UI 汉化...${NC}"
 
 node "${LOCALIZE_DIR}/extra-ui.js" "$CLI_PATH"
 
-# ========== Step 4: 安装 Hooks ==========
+# ========== Step 4: 插件汉化 ==========
 echo ""
-echo -e "${MAGENTA}[4/5] 安装工具提示钩子...${NC}"
+echo -e "${MAGENTA}[4/6] 汉化插件技能描述...${NC}"
+
+node "${LOCALIZE_DIR}/localize-plugins.js"
+
+# ========== Step 5: 安装 Hooks ==========
+echo ""
+echo -e "${MAGENTA}[5/6] 安装钩子（工具提示 + 自动汉化）...${NC}"
 
 # 复制 hook 脚本到 Claude 配置目录
 HOOK_TARGET_DIR="${CLAUDE_CONFIG_DIR}/hooks"
@@ -103,10 +112,17 @@ if [ -f "${HOOKS_DIR}/tool-tips-post.sh" ]; then
     chmod +x "${HOOK_TARGET_DIR}/tool-tips-post.sh"
     echo -e "  ${GREEN}✓${NC} 已安装 tool-tips-post.sh"
 
+    # 安装自动汉化 hook
+    if [ -f "${HOOKS_DIR}/auto-localize.sh" ]; then
+        cp "${HOOKS_DIR}/auto-localize.sh" "${HOOK_TARGET_DIR}/auto-localize.sh"
+        chmod +x "${HOOK_TARGET_DIR}/auto-localize.sh"
+        echo -e "  ${GREEN}✓${NC} 已安装 auto-localize.sh（版本变化自动汉化）"
+    fi
+
     # 更新 settings.json 中的 hooks 配置
     SETTINGS_FILE="${CLAUDE_CONFIG_DIR}/settings.json"
     if [ -f "$SETTINGS_FILE" ]; then
-        # 使用 node 来安全地更新 JSON
+        # 使用 node 来安全地更新 JSON（同时注册两个 hook）
         node -e "
 const fs = require('fs');
 const settingsPath = '${SETTINGS_FILE}';
@@ -114,7 +130,8 @@ const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
 if (!settings.hooks) settings.hooks = {};
 if (!settings.hooks.PostToolUse) settings.hooks.PostToolUse = [];
 
-const hookConfig = {
+// Hook 1: 工具提示
+const tipsHook = {
     matcher: 'Bash|Read|Write|Edit|Glob|Grep|mcp__*',
     hooks: [{
         type: 'command',
@@ -122,18 +139,33 @@ const hookConfig = {
     }]
 };
 
-// 检查是否已存在
-const exists = settings.hooks.PostToolUse.some(h =>
+// Hook 2: 自动汉化
+const autoLocalizeHook = {
+    matcher: 'Bash',
+    hooks: [{
+        type: 'command',
+        command: '${HOOK_TARGET_DIR}/auto-localize.sh'
+    }]
+};
+
+// 检查并添加 tips hook
+const tipsExists = settings.hooks.PostToolUse.some(h =>
     h.hooks && h.hooks.some(hook => hook.command && hook.command.includes('tool-tips-post.sh'))
 );
-
-if (!exists) {
-    settings.hooks.PostToolUse.push(hookConfig);
-    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
-    console.log('  ✓ 已更新 settings.json 中的 hooks 配置');
-} else {
-    console.log('  hooks 配置已存在，跳过');
+if (!tipsExists) {
+    settings.hooks.PostToolUse.push(tipsHook);
 }
+
+// 检查并添加 auto-localize hook
+const autoExists = settings.hooks.PostToolUse.some(h =>
+    h.hooks && h.hooks.some(hook => hook.command && hook.command.includes('auto-localize.sh'))
+);
+if (!autoExists) {
+    settings.hooks.PostToolUse.push(autoLocalizeHook);
+}
+
+fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+console.log('  ✓ 已更新 settings.json 中的 hooks 配置');
 " 2>&1 || echo -e "  ${YELLOW}⚠${NC} 无法自动更新 settings.json，请手动添加 hooks 配置"
     else
         echo -e "  ${YELLOW}⚠${NC} 未找到 settings.json，请手动配置 hooks"
@@ -142,9 +174,9 @@ else
     echo -e "  ${YELLOW}⚠${NC} 未找到 hooks/tool-tips-post.sh，跳过"
 fi
 
-# ========== Step 5: 配置语言设置 ==========
+# ========== Step 6: 配置语言设置 ==========
 echo ""
-echo -e "${MAGENTA}[5/5] 配置语言设置...${NC}"
+echo -e "${MAGENTA}[6/6] 配置语言设置...${NC}"
 
 # 更新 settings.json 中的 language 字段
 if [ -f "$SETTINGS_FILE" ]; then

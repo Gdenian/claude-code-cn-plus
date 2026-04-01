@@ -2,3 +2,7 @@ node_modules/
 .DS_Store
 *.log
 cli.bak.js
+localize-manifest.json
+*.swp
+*.swo
+*~

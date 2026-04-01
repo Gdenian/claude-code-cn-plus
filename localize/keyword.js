@@ -191,6 +191,10 @@ module.exports = {
   'Wait for a specified duration': '等待指定的持续时间',
   'Setup Claude Code on the web': '在网页上设置 Claude Code',
 
+  // ========== 内置斜杠命令（/insights, /statusline） ==========
+  'Generate a report analyzing your Claude Code sessions': '生成报告分析你的 Claude Code 使用情况',
+  "Set up Claude Code's status line UI": '设置 Claude Code 的状态栏 UI',
+
   // 参数/选项翻译
   'Alias definition in the form name=value': '以 name=value 形式定义别名',
   'Number of tasks to run': '要运行的任务数量',

@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "lastUpdated": "2026-04-01",
+  "translations": {
+    "claude-hud/setup": "配置 claude-hud 作为你的状态栏",
+    "claude-hud/configure": "配置 HUD 显示选项（布局、预设、显示元素），同时保留高级手动覆盖设置",
+
+    "claude-md-management/claude-md-improver": "审计和改进仓库中的 CLAUDE.md 文件。当用户要求检查、审计、更新、改进或修复 CLAUDE.md 文件时使用。扫描所有 CLAUDE.md 文件，对照模板评估质量，输出质量报告，然后进行针对性更新。当用户提到\"CLAUDE.md 维护\"或\"项目记忆优化\"时也可使用。",
+    "claude-md-management/revise-claude-md": "根据本次会话的学习成果更新 CLAUDE.md",
+
+    "claude-code-setup/claude-automation-recommender": "分析代码库并推荐 Claude Code 自动化（钩子、子代理、技能、插件、MCP 服务器）。当用户要求自动化推荐、想优化 Claude Code 配置、提及改进 Claude Code 工作流、询问如何首次为项目设置 Claude Code，或想知道应该使用哪些 Claude Code 功能时使用。",
+
+    "document-skills/algorithmic-art": "使用 p5.js 创建带有种子随机性和交互式参数探索的算法艺术。当用户要求用代码创作艺术、生成艺术、算法艺术、流场或粒子系统时使用。",
+    "document-skills/brand-guidelines": "将 Anthropic 官方品牌颜色和排版应用到任何可能需要 Anthropic 外观风格的作品。当涉及品牌颜色或样式指南、视觉格式或公司设计标准时使用。",
+    "document-skills/canvas-design": "使用设计理念在 .png 和 .pdf 文档中创建精美的视觉艺术。当用户要求创建海报、艺术作品、设计或其他静态作品时使用。",
+    "document-skills/claude-api": "使用 Claude API 或 Anthropic SDK 构建应用。当代码导入 anthropic/@anthropic-ai/sdk/claude_agent_sdk，或用户要求使用 Claude API、Anthropic SDK 或 Agent SDK 时触发。",
+    "document-skills/doc-coauthoring": "引导用户通过结构化工作流共同撰写文档。当用户想编写文档、提案、技术规格、决策文档或类似结构化内容时使用。",
+    "document-skills/docx": "当用户想要创建、读取、编辑或操作 Word 文档（.docx 文件）时使用此技能。",
+    "document-skills/frontend-design": "创建独特的、生产级前端界面，具有高设计质量。当用户要求构建网页组件、页面、制品、海报或应用程序时使用（示例包括网站、着陆页、仪表板、React 组件、HTML/CSS 布局，或美化任何 Web UI）。生成创意、精致的代码和 UI 设计，避免千篇一律的 AI 美学。",
+    "document-skills/internal-comms": "一套帮助编写各种内部沟通内容的资源，使用公司偏好的格式。当被要求编写某种内部沟通内容（状态报告、管理层更新、第三方更新、公司通讯、FAQ、事件报告、项目更新等）时使用此技能。",
+    "document-skills/mcp-builder": "创建高质量 MCP（模型上下文协议）服务器的指南，使 LLM 能够通过精心设计的工具与外部服务交互。当构建 MCP 服务器以集成外部 API 或服务时使用，无论是 Python (FastMCP) 还是 Node/TypeScript (MCP SDK)。",
+    "document-skills/pdf": "当用户想要对 PDF 文件进行任何操作时使用此技能。包括读取或提取 PDF 中的文本/表格、合并多个 PDF、拆分 PDF、旋转页面、添加水印、创建新 PDF、填写 PDF 表单、加密/解密 PDF、提取图像，以及对扫描 PDF 进行 OCR 使其可搜索。如果用户提及 .pdf 文件或要求生成一个，请使用此技能。",
+    "document-skills/pptx": "任何时候涉及 .pptx 文件（作为输入、输出或两者）时使用此技能。包括：创建幻灯片、演示文稿或宣讲稿；读取、解析或提取任何 .pptx 文件中的文本（即使提取的内容将用于其他地方，如邮件或摘要）；编辑、修改或更新现有演示文稿；合并或拆分幻灯片文件；处理模板、布局、演讲者备注或评论。当用户提及\"演示文稿\"、\"幻灯片\"、\"PPT\"或引用 .pptx 文件名时触发。",
+    "document-skills/skill-creator": "创建新技能、修改和改进现有技能，并衡量技能性能。当用户想从头创建技能、编辑或优化现有技能、运行评估测试技能、基准测试技能性能与方差分析，或优化技能描述以提高触发准确性时使用。",
+    "document-skills/slack-gif-creator": "创建为 Slack 优化的动画 GIF 的知识和工具。提供约束条件、验证工具和动画概念。当用户要求为 Slack 创建动画 GIF 时使用，例如\"帮我做一个 X 做 Y 的 GIF 用于 Slack\"。",
+    "document-skills/theme-factory": "用主题为作品设置样式的工具包。作品可以是幻灯片、文档、报告、HTML 着陆页等。有 10 个预设主题（含颜色/字体），可应用于任何已创建的作品，也可即时生成新主题。",
+    "document-skills/web-artifacts-builder": "使用现代前端 Web 技术（React、Tailwind CSS、shadcn/ui）创建复杂的多组件 claude.ai HTML 制品的工具套件。用于需要状态管理、路由或 shadcn/ui 组件的复杂制品。",
+    "document-skills/webapp-testing": "使用 Playwright 与本地 Web 应用交互和测试的工具包。支持验证前端功能、调试 UI 行为、捕获浏览器截图和查看浏览器日志。",
+    "document-skills/xlsx": "任何时候电子表格文件是主要输入或输出时使用此技能。包括：打开、读取、编辑或修复现有的 .xlsx、.xlsm、.csv 或 .tsv 文件（如添加列、计算公式、格式化、制图、清理杂乱数据）；从零开始或从其他数据源创建新电子表格；或在表格文件格式之间转换。",
+    "document-skills/skills-reference": "用于发现哪些技能适用于任务的参考指南。当用户需要了解可用技能或不确定该使用哪个技能时使用。",
+
+    "frontend-design/frontend-design": "创建独特的、生产级前端界面，具有高设计质量。当用户要求构建网页组件、页面、制品、海报或应用程序时使用。生成创意、精致的代码和 UI 设计，避免千篇一律的 AI 美学。",
+
+    "skill-creator/skill-creator": "创建新技能、修改和改进现有技能，并衡量技能性能。当用户想从头创建技能、编辑或优化现有技能、运行评估测试技能、基准测试技能性能与方差分析，或优化技能描述以提高触发准确性时使用。",
+
+    "superpowers/brainstorming": "在任何创造性工作之前必须使用 — 创建功能、构建组件、添加新功能或修改行为。在实施之前深入探索用户意图、需求和设计。",
+    "superpowers/dispatching-parallel-agents": "当面对 2 个或更多可独立执行、无需共享状态或顺序依赖的任务时使用",
+    "superpowers/executing-plans": "当有已编写的实施计划需要在独立会话中执行，并带有审查检查点时使用",
+    "superpowers/finishing-a-development-branch": "当实现完成、所有测试通过，需要决定如何集成工作时使用 — 引导完成开发工作，提供合并、创建 PR 或清理的结构化选项",
+    "superpowers/receiving-code-review": "当收到代码审查反馈、在实施建议之前使用，尤其当反馈不明确或技术上有疑问时 — 需要技术严谨性和验证，而非敷衍同意或盲目实施",
+    "superpowers/requesting-code-review": "当完成任务、实现主要功能或在合并之前验证工作是否满足需求时使用",
+    "superpowers/subagent-driven-development": "当在当前会话中执行包含独立任务的实施计划时使用",
+    "superpowers/systematic-debugging": "当遇到任何 bug、测试失败或意外行为时，在提出修复方案之前使用",
+    "superpowers/test-driven-development": "当实现任何功能或修复 bug 时，在编写实现代码之前使用",
+    "superpowers/using-git-worktrees": "当开始需要与当前工作区隔离的功能开发，或在执行实施计划之前使用 — 创建隔离的 git worktree，智能选择目录并进行安全验证",
+    "superpowers/using-superpowers": "当开始任何对话时使用 — 建立如何查找和使用技能的规范，要求在任何响应（包括澄清问题）之前调用 Skill 工具",
+    "superpowers/verification-before-completion": "当准备声称工作已完成、已修复或已通过时，在提交或创建 PR 之前使用 — 要求在做出任何成功声明之前运行验证命令并确认输出；始终先有证据再下结论",
+    "superpowers/writing-plans": "当有多步骤任务的规格或需求时，在编写代码之前使用",
+    "superpowers/writing-skills": "当创建新技能、编辑现有技能或在部署前验证技能是否正常工作时使用",
+    "superpowers/brainstorm": "已弃用 - 请改用 superpowers:brainstorming 技能",
+    "superpowers/execute-plan": "已弃用 - 请改用 superpowers:executing-plans 技能",
+    "superpowers/write-plan": "已弃用 - 请改用 superpowers:writing-plans 技能",
+
+    "codex/adversarial-review": "运行 Codex 对抗性审查，质疑实现方案和设计决策",
+    "codex/cancel": "取消此仓库中活跃的后台 Codex 任务",
+    "codex/rescue": "将调查、修复请求或后续救援工作委托给 Codex 救援子代理",
+    "codex/result": "显示此仓库中已完成 Codex 任务的最终输出",
+    "codex/review": "对本地 git 状态运行 Codex 代码审查",
+    "codex/setup": "检查本地 Codex CLI 是否就绪，可选切换停止时的审查门控",
+    "codex/status": "显示当前仓库中活跃和近期的 Codex 任务，包括审查门控状态",
+    "codex/codex-cli-runtime": "从 Claude Code 调用 codex-companion 运行时的内部辅助契约",
+    "codex/codex-result-handling": "向用户呈现 Codex 辅助输出的内部指引",
+    "codex/gpt-5-4-prompting": "在 Codex Claude Code 插件中为编码、审查、诊断和研究任务编写 Codex 和 GPT-5.4 提示词的内部指引"
+  }
+}

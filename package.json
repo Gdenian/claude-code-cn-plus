@@ -1,0 +1,22 @@
+{
+  "name": "claude-code-cn-plus",
+  "version": "0.1.0",
+  "description": "Claude Code 中文汉化增强包",
+  "type": "commonjs",
+  "bin": {
+    "cccn": "bin/cccn.js"
+  },
+  "scripts": {
+    "test": "node --test",
+    "check": "node --check bin/cccn.js && find src test localize -name '*.js' -print0 | xargs -0 -n1 node --check",
+    "dry-run:install": "node bin/cccn.js install --yes --dry-run",
+    "dry-run:uninstall": "node bin/cccn.js uninstall --yes --dry-run"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "tweakcc": "4.0.13"
+  },
+  "devDependencies": {}
+}

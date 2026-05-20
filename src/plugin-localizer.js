@@ -4,10 +4,24 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
+function splitFrontmatter(content) {
+  const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---(?=\r?\n|$)/);
+  if (!match) return null;
+  return {
+    full: match[0],
+    body: match[1],
+    end: match[0].length,
+  };
+}
+
 function readField(content, field) {
-  const quoted = content.match(new RegExp(`^---[\\s\\S]*?^${field}:\\s*["'](.+?)["']\\s*$`, 'm'));
+  const frontmatter = splitFrontmatter(content);
+  if (!frontmatter) return null;
+
+  const quoted = frontmatter.body.match(new RegExp(`^${field}:\\s*["'](.+?)["']\\s*$`, 'm'));
   if (quoted) return quoted[1];
-  const unquoted = content.match(new RegExp(`^---[\\s\\S]*?^${field}:\\s*(.+?)\\s*$`, 'm'));
+
+  const unquoted = frontmatter.body.match(new RegExp(`^${field}:\\s*(.+?)\\s*$`, 'm'));
   return unquoted ? unquoted[1].trim() : null;
 }
 
@@ -147,10 +161,15 @@ function replaceDescription(filePath, newDescription, dryRun) {
   const current = readField(content, 'description');
   if (current && /[\u4e00-\u9fff]/.test(current)) return 'skip';
 
-  const nextContent = content.replace(
-    /^(---[\s\S]*?^description:\s*).+$/m,
+  const frontmatter = splitFrontmatter(content);
+  if (!frontmatter) return false;
+
+  const nextFrontmatter = frontmatter.full.replace(
+    /^(description:\s*).+$/m,
     `$1${escapeYamlValue(newDescription)}`
   );
+  const nextContent = `${nextFrontmatter}${content.slice(frontmatter.end)}`;
+
   if (nextContent === content) return false;
   if (!dryRun) fs.writeFileSync(filePath, nextContent, 'utf8');
   return true;

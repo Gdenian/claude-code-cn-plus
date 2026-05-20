@@ -31,6 +31,58 @@ function writeMemory(filePath, translations) {
   fs.writeFileSync(filePath, JSON.stringify({ version: 1, translations }, null, 2));
 }
 
+test('readField only reads fields from frontmatter', () => {
+  const content = [
+    '---',
+    'name: demo',
+    'description: Frontmatter desc',
+    '---',
+    '',
+    'description: Body desc',
+  ].join('\n');
+
+  assert.equal(readField(content, 'description'), 'Frontmatter desc');
+});
+
+test('replaceDescription does not modify body description text', () => {
+  const fixture = makeTempClaudeDir();
+  const memoryPath = path.join(fixture.claudeDir, 'translation-memory.json');
+  fs.writeFileSync(fixture.skillPath, [
+    '---',
+    'name: demo-skill',
+    'description: English desc',
+    '---',
+    '',
+    'description: Body desc must stay as-is',
+  ].join('\n'));
+  writeMemory(memoryPath, {
+    'demo-plugin/demo-skill': '中文描述',
+  });
+
+  const result = localizePluginDescriptions({ claudeDir: fixture.claudeDir, memoryPath });
+  const content = fs.readFileSync(fixture.skillPath, 'utf8');
+
+  assert.equal(result.patched, 1);
+  assert.match(content, /^description: "中文描述"$/m);
+  assert.match(content, /^description: Body desc must stay as-is$/m);
+});
+
+test('readField ignores files without frontmatter', () => {
+  assert.equal(readField('description: Body only', 'description'), null);
+});
+
+test('readField ignores body fields when frontmatter omits the field', () => {
+  const content = [
+    '---',
+    'name: demo',
+    '---',
+    '',
+    'description: Body desc',
+  ].join('\n');
+
+  assert.equal(readField(content, 'description'), null);
+});
+
 test('localizePluginDescriptions replaces only description from translation memory', () => {
   const fixture = makeTempClaudeDir();
   const memoryPath = path.join(fixture.claudeDir, 'translation-memory.json');

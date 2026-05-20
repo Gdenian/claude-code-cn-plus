@@ -129,3 +129,74 @@ test('patchNativeCli does not overwrite original native backup on repeated patch
   await restoreNativeCli({ backupDir: fixture.backupDir, api });
   assert.equal(fs.readFileSync(fixture.binaryPath, 'utf8'), 'const label = "Hello world";');
 });
+
+test('patchNativeCli restores upgraded native content when second patch write fails', async () => {
+  const fixture = makeFixture();
+  fs.writeFileSync(fixture.binaryPath, 'const label = "Hello v1";');
+
+  const api = {
+    readContent: async (installation) => fs.readFileSync(installation.path, 'utf8'),
+    writeContent: async (installation, content) => fs.writeFileSync(installation.path, content),
+    backupFile: async (source, backup) => fs.copyFileSync(source, backup),
+    restoreBackup: async (backup, target) => fs.copyFileSync(backup, target),
+  };
+
+  const installation = { path: fixture.binaryPath, kind: 'native', version: '2.0.0' };
+  await patchNativeCli({
+    installation,
+    backupDir: fixture.backupDir,
+    api,
+    translations: { 'Hello v1': '你好 v1', 'Hello v2': '你好 v2' },
+  });
+
+  fs.writeFileSync(fixture.binaryPath, 'const label = "Hello v2";');
+
+  await assert.rejects(
+    patchNativeCli({
+      installation,
+      backupDir: fixture.backupDir,
+      api: {
+        ...api,
+        writeContent: async () => {
+          throw new Error('write failed');
+        },
+      },
+      translations: { 'Hello v1': '你好 v1', 'Hello v2': '你好 v2' },
+    }),
+    /write failed/
+  );
+
+  assert.equal(fs.readFileSync(fixture.binaryPath, 'utf8'), 'const label = "Hello v2";');
+});
+
+test('restoreNativeCli restores latest upgraded native backup after repatching same path', async () => {
+  const fixture = makeFixture();
+  fs.writeFileSync(fixture.binaryPath, 'const label = "Hello v1";');
+
+  const api = {
+    readContent: async (installation) => fs.readFileSync(installation.path, 'utf8'),
+    writeContent: async (installation, content) => fs.writeFileSync(installation.path, content),
+    backupFile: async (source, backup) => fs.copyFileSync(source, backup),
+    restoreBackup: async (backup, target) => fs.copyFileSync(backup, target),
+  };
+
+  const installation = { path: fixture.binaryPath, kind: 'native', version: '2.0.0' };
+  await patchNativeCli({
+    installation,
+    backupDir: fixture.backupDir,
+    api,
+    translations: { 'Hello v1': '你好 v1', 'Hello v2': '你好 v2' },
+  });
+
+  fs.writeFileSync(fixture.binaryPath, 'const label = "Hello v2";');
+
+  await patchNativeCli({
+    installation,
+    backupDir: fixture.backupDir,
+    api,
+    translations: { 'Hello v1': '你好 v1', 'Hello v2': '你好 v2' },
+  });
+
+  await restoreNativeCli({ backupDir: fixture.backupDir, api });
+  assert.equal(fs.readFileSync(fixture.binaryPath, 'utf8'), 'const label = "Hello v2";');
+});

@@ -12,14 +12,32 @@ function defaultBackupDir() {
   return path.join(os.homedir(), '.claude', 'localize-backups');
 }
 
-function backupPathForNative(backupDir, binaryPath) {
+function backupPathForNative(backupDir, binaryPath, contentHash) {
   const suffix = sha256(binaryPath).slice(0, 12);
   const baseName = path.basename(binaryPath || 'claude') || 'claude';
-  return path.join(backupDir, `${baseName}-${suffix}.bak`);
+  if (!contentHash) {
+    return path.join(backupDir, `${baseName}-${suffix}.bak`);
+  }
+
+  return path.join(backupDir, `${baseName}-${suffix}-${contentHash.slice(0, 12)}.bak`);
 }
 
 function manifestPathFor(backupDir) {
   return path.join(backupDir, 'native-patch-manifest.json');
+}
+
+function readNativeManifest(backupDir) {
+  const manifestPath = manifestPathFor(backupDir);
+  if (!fs.existsSync(manifestPath)) return null;
+  return JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+}
+
+function backupPathForCurrentContent(backupDir, binaryPath, originalHash) {
+  const manifest = readNativeManifest(backupDir);
+  if (manifest && manifest.path === binaryPath && manifest.patchedHash === originalHash && manifest.backupPath) {
+    return manifest.backupPath;
+  }
+  return backupPathForNative(backupDir, binaryPath, originalHash);
 }
 
 function hasTweakccApi(api) {
@@ -70,9 +88,10 @@ function backupExists(backupPath) {
 }
 
 async function patchWithApi(options, api, installation, backupDir, translations) {
-  const backupPath = backupPathForNative(backupDir, installation.path);
   const manifestPath = manifestPathFor(backupDir);
   const content = await api.readContent(installation);
+  const originalHash = sha256(content);
+  const backupPath = backupPathForCurrentContent(backupDir, installation.path, originalHash);
   const report = applyTranslations(content, translations);
   const result = {
     type: 'native',
@@ -81,7 +100,7 @@ async function patchWithApi(options, api, installation, backupDir, translations)
     manifestPath,
     version: installation.version || options.version || null,
     patcherVersion: options.patcherVersion || 'tweakcc@4.0.13',
-    originalHash: sha256(content),
+    originalHash,
     patchedHash: sha256(report.content),
     dryRun: Boolean(options.dryRun),
     report,
@@ -117,9 +136,9 @@ async function patchWithApi(options, api, installation, backupDir, translations)
 }
 
 function patchWithCli(options, installation, backupDir, translations) {
-  const backupPath = backupPathForNative(backupDir, installation.path);
   const manifestPath = manifestPathFor(backupDir);
   const originalHash = fs.existsSync(installation.path) ? hashFile(installation.path) : null;
+  const backupPath = backupPathForCurrentContent(backupDir, installation.path, originalHash);
   const scriptPath = path.join(os.tmpdir(), `cccn-native-${process.pid}.js`);
   const command = options.tweakccCommand || 'tweakcc';
   const args = buildAdhocPatchArgs({ binaryPath: installation.path, scriptPath });

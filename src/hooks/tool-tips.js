@@ -23,6 +23,14 @@ function explainCommand(command) {
   return map[first] || (command && command.length <= 20 ? `执行命令: ${command}` : '执行系统命令');
 }
 
+function redactCommand(command) {
+  return String(command || '')
+    .replace(/(authorization:\s*bearer\s+)[^\s"']+/ig, '$1[REDACTED]')
+    .replace(/([?&](?:api_key|key|token|access_token)=)[^&\s"']+/ig, '$1[REDACTED]')
+    .replace(/\b([A-Z0-9_]*(?:API_KEY|TOKEN|SECRET|PASSWORD)=)("[^"]*"|'[^']*'|[^\s"']+)/g, '$1[REDACTED]')
+    .replace(/\b(?:sk|pk|rk)-[A-Za-z0-9_-]{8,}\b/g, '[REDACTED]');
+}
+
 function shortPath(filePath) {
   return String(filePath || '').split(/[\\/]/).pop().slice(0, 50);
 }
@@ -35,7 +43,8 @@ function getTip(event) {
   if (toolName === 'Edit' || toolName === 'MultiEdit') return input.file_path ? `编辑: ${shortPath(input.file_path)} - 修改文件内容` : '编辑完成';
   if (toolName === 'Bash') {
     const command = String(input.command || '').split('\n').find((line) => line.trim() && !line.trim().startsWith('#')) || '';
-    return command ? `执行: ${command} - ${explainCommand(command)}` : '命令执行完成';
+    const safeCommand = redactCommand(command);
+    return command ? `执行: ${safeCommand} - ${explainCommand(safeCommand)}` : '命令执行完成';
   }
   if (toolName === 'Grep') return input.pattern ? `搜索: ${input.pattern}` : '搜索完成';
   if (toolName === 'Glob') return input.pattern ? `匹配文件: ${input.pattern}` : '文件匹配完成';
@@ -64,4 +73,5 @@ module.exports = {
   explainCommand,
   getTip,
   parseEvent,
+  redactCommand,
 };

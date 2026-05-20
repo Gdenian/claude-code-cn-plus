@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <img alt="Node.js 20+" src="https://img.shields.io/badge/Node.js-20%2B-339933">
+  <img alt="Node.js 24+" src="https://img.shields.io/badge/Node.js-24%2B-339933">
   <img alt="三端可用" src="https://img.shields.io/badge/%E4%B8%89%E7%AB%AF%E5%8F%AF%E7%94%A8-macOS%20%7C%20Linux%20%7C%20Windows-2563eb">
   <img alt="中文体验" src="https://img.shields.io/badge/%E4%B8%AD%E6%96%87%E4%BD%93%E9%AA%8C-%E5%BC%80%E7%AE%B1%E5%8D%B3%E7%94%A8-d946ef">
   <img alt="License MIT" src="https://img.shields.io/badge/License-MIT-111827">
@@ -88,7 +88,7 @@ node ~/.claude-code-cn-plus/bin/cccn.js doctor
 一般只需要确认两件事：
 
 1. 你的电脑已经能正常打开 Claude Code。
-2. 你的电脑已经安装 Node.js 20 或更高版本。
+2. 你的电脑已经安装 Node.js 24 或更高版本。
 
 macOS 和 Linux 用户可以直接在系统终端执行安装命令。Windows 用户建议在 WSL 或 Git Bash 里执行安装命令。
 
@@ -98,9 +98,9 @@ macOS 和 Linux 用户可以直接在系统终端执行安装命令。Windows �
 node -v
 ```
 
-如果显示 `v20`、`v21`、`v22` 这类版本号，就可以继续。
+如果显示 `v24` 或更高版本号，就可以继续。
 
-如果提示找不到命令，或版本低于 20，请先安装新版 Node.js。
+如果提示找不到命令，或版本低于 24，请先安装新版 Node.js。
 
 ## 你会得到什么
 
@@ -171,7 +171,7 @@ node ~/.claude-code-cn-plus/bin/cccn.js install --yes
 
 ### 提示 Node.js 版本太低
 
-本项目需要 Node.js 20+。请升级 Node.js 后再执行安装命令。
+本项目需要 Node.js 24+。请升级 Node.js 后再执行安装命令。
 
 ### 我想卸载，恢复原来的 Claude Code
 

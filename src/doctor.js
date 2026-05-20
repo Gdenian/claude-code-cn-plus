@@ -7,9 +7,9 @@ const { detectClaudeInstallation } = require('./claude-installation');
 const { readManifest, manifestPathFor } = require('./manifest');
 const { readSettings } = require('./settings');
 
-function isNode20Plus(version = process.versions.node) {
+function isNode24Plus(version = process.versions.node) {
   const major = Number(version.split('.')[0]);
-  return major >= 20;
+  return major >= 24;
 }
 
 function hookStatus(settings) {
@@ -30,7 +30,7 @@ async function runDoctor(options = {}) {
   const manifest = readManifest(claudeDir);
 
   return {
-    node: { ok: isNode20Plus(options.nodeVersion), version: options.nodeVersion || process.versions.node },
+    node: { ok: isNode24Plus(options.nodeVersion), version: options.nodeVersion || process.versions.node },
     installation: installation || null,
     hooks,
     pluginCache: { path: pluginCache, exists: fs.existsSync(pluginCache) },
@@ -41,6 +41,6 @@ async function runDoctor(options = {}) {
 
 module.exports = {
   hookStatus,
-  isNode20Plus,
+  isNode24Plus,
   runDoctor,
 };

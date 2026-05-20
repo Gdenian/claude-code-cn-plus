@@ -17,14 +17,14 @@ echo -e "${MAGENTA}Claude Code CN Plus 安装器${NC}"
 
 if ! command -v node >/dev/null 2>&1; then
   echo -e "${RED}错误: 未安装 Node.js${NC}"
-  echo "请先安装 Node.js 20+: https://nodejs.org/"
+  echo "请先安装 Node.js 24+: https://nodejs.org/"
   exit 1
 fi
 
 NODE_MAJOR="$(node -p "Number(process.versions.node.split('.')[0])")"
-if [ "$NODE_MAJOR" -lt 20 ]; then
+if [ "$NODE_MAJOR" -lt 24 ]; then
   echo -e "${RED}错误: Node.js 版本过低: $(node --version)${NC}"
-  echo "Claude Code CN Plus 需要 Node.js 20+。"
+  echo "Claude Code CN Plus 需要 Node.js 24+。"
   exit 1
 fi
 echo -e "${GREEN}✓${NC} Node.js $(node --version)"

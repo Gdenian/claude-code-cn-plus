@@ -13,7 +13,7 @@
     "dry-run:uninstall": "node bin/cccn.js uninstall --yes --dry-run"
   },
   "engines": {
-    "node": ">=24.0.0"
+    "node": ">=20.0.0"
   },
   "dependencies": {
     "tweakcc": "4.0.13"

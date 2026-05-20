@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
-const { runDoctor, isNode24Plus } = require('../src/doctor');
+const { runDoctor, isNode20Plus } = require('../src/doctor');
 
 function makeClaudeDir() {
   const claudeDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cccn-doctor-'));
@@ -22,9 +22,9 @@ function makeClaudeDir() {
   return claudeDir;
 }
 
-test('isNode24Plus checks major version only', () => {
-  assert.equal(isNode24Plus('24.0.0'), true);
-  assert.equal(isNode24Plus('23.9.9'), false);
+test('isNode20Plus checks major version only', () => {
+  assert.equal(isNode20Plus('20.0.0'), true);
+  assert.equal(isNode20Plus('19.9.9'), false);
 });
 
 test('runDoctor reports hooks, plugin cache, backups, and manifest status', async () => {
@@ -32,7 +32,7 @@ test('runDoctor reports hooks, plugin cache, backups, and manifest status', asyn
   const report = await runDoctor({
     claudeDir,
     installation: { kind: 'npm', path: '/tmp/cli.js', version: '1.0.0' },
-    nodeVersion: '24.0.0',
+    nodeVersion: '20.0.0',
   });
 
   assert.equal(report.node.ok, true);

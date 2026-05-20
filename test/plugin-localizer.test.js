@@ -210,6 +210,30 @@ test('localizePluginDescriptions uses generated translations as a fallback', () 
   assert.equal(readField(content, 'description'), '生成的中文描述');
 });
 
+test('localizePluginDescriptions ignores invalid generated translation values', () => {
+  const fixture = makeTempClaudeDir();
+  const memoryPath = path.join(fixture.claudeDir, 'translation-memory.json');
+  const generatedMemoryPath = generatedTranslationsPathFor(fixture.claudeDir);
+  writeMemory(memoryPath, {});
+  fs.writeFileSync(generatedMemoryPath, JSON.stringify({
+    version: 1,
+    translations: {
+      'demo-plugin/demo-skill': { text: '中文描述' },
+    },
+  }));
+
+  const result = localizePluginDescriptions({
+    claudeDir: fixture.claudeDir,
+    memoryPath,
+    generatedMemoryPath,
+  });
+  const content = fs.readFileSync(fixture.skillPath, 'utf8');
+
+  assert.equal(result.patched, 0);
+  assert.equal(result.missing, 1);
+  assert.equal(readField(content, 'description'), 'English desc');
+});
+
 test('scanMissingPluginDescriptions can run without writing missing file', () => {
   const fixture = makeTempClaudeDir();
   const memoryPath = path.join(fixture.claudeDir, 'translation-memory.json');

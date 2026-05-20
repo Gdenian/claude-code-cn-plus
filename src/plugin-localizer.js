@@ -32,10 +32,19 @@ function escapeYamlValue(value) {
   return `"${value}"`;
 }
 
+function normalizeTranslations(translations) {
+  const normalized = {};
+  if (!translations || typeof translations !== 'object' || Array.isArray(translations)) return normalized;
+  for (const [key, value] of Object.entries(translations)) {
+    if (key && typeof value === 'string') normalized[key] = value;
+  }
+  return normalized;
+}
+
 function loadTranslationMemory(memoryPath) {
   if (!fs.existsSync(memoryPath)) return {};
   const parsed = JSON.parse(fs.readFileSync(memoryPath, 'utf8'));
-  return parsed.translations || {};
+  return normalizeTranslations(parsed.translations);
 }
 
 function loadTranslationMemories(memoryPaths) {

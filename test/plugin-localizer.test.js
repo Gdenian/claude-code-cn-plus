@@ -229,6 +229,28 @@ test('localizePluginDescriptions ignores malformed generated translation memory'
   assert.equal(readField(content, 'description'), 'English desc');
 });
 
+test('localizePluginDescriptions ignores null generated translation memory', () => {
+  const fixture = makeTempClaudeDir();
+  const memoryPath = path.join(fixture.claudeDir, 'translation-memory.json');
+  const generatedMemoryPath = generatedTranslationsPathFor(fixture.claudeDir);
+  writeMemory(memoryPath, {});
+  fs.writeFileSync(generatedMemoryPath, 'null');
+
+  let result;
+  assert.doesNotThrow(() => {
+    result = localizePluginDescriptions({
+      claudeDir: fixture.claudeDir,
+      memoryPath,
+      generatedMemoryPath,
+    });
+  });
+  const content = fs.readFileSync(fixture.skillPath, 'utf8');
+
+  assert.equal(result.patched, 0);
+  assert.equal(result.missing, 1);
+  assert.equal(readField(content, 'description'), 'English desc');
+});
+
 test('localizePluginDescriptions ignores invalid generated translation values', () => {
   const fixture = makeTempClaudeDir();
   const memoryPath = path.join(fixture.claudeDir, 'translation-memory.json');

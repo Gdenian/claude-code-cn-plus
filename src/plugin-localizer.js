@@ -49,6 +49,7 @@ function loadTranslationMemory(memoryPath) {
   } catch {
     return {};
   }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
   return normalizeTranslations(parsed.translations);
 }
 

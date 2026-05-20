@@ -13,7 +13,10 @@ function readPluginVersions(claudeDir) {
     return {};
   }
   const versions = {};
-  for (const [key, entries] of Object.entries(installed.plugins || {})) {
+  if (!installed || typeof installed !== 'object' || Array.isArray(installed)) return versions;
+  const plugins = installed.plugins;
+  if (!plugins || typeof plugins !== 'object' || Array.isArray(plugins)) return versions;
+  for (const [key, entries] of Object.entries(plugins)) {
     if (Array.isArray(entries) && entries.length > 0) {
       versions[key] = entries[0].version || 'unknown';
     }

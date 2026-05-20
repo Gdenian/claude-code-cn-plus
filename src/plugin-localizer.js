@@ -182,6 +182,23 @@ function writeMissingFile(options, missingItems) {
   return missingPath;
 }
 
+function saveGeneratedTranslations(options, payload) {
+  const translations = payload?.translations;
+  if (!payload || payload.version !== 1 || !translations || typeof translations !== 'object' || Array.isArray(translations)) {
+    throw new Error('生成翻译 JSON 必须包含 version=1 和 translations 对象');
+  }
+
+  const generatedPath = options.generatedMemoryPath || generatedTranslationsPathFor(options.claudeDir);
+  const data = { version: 1, translations };
+
+  if (!options.dryRun) {
+    fs.mkdirSync(path.dirname(generatedPath), { recursive: true });
+    fs.writeFileSync(generatedPath, JSON.stringify(data, null, 2));
+  }
+
+  return { path: generatedPath, count: Object.keys(translations).length, dryRun: Boolean(options.dryRun) };
+}
+
 function scanMissingPluginDescriptions(options) {
   const generatedMemoryPath = options.generatedMemoryPath || generatedTranslationsPathFor(options.claudeDir);
   const translations = loadTranslationMemories([generatedMemoryPath, options.memoryPath]);
@@ -272,6 +289,7 @@ module.exports = {
   missingTranslationsPathFor,
   readField,
   replaceDescription,
+  saveGeneratedTranslations,
   scanAllDescriptionFiles,
   scanPluginFiles,
   scanMissingPluginDescriptions,

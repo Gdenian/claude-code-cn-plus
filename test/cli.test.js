@@ -1,7 +1,11 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+const { Readable } = require('node:stream');
 
-const { parseArgs } = require('../src/cli');
+const { parseArgs, run } = require('../src/cli');
 
 test('parseArgs parses command and common flags', () => {
   assert.deepEqual(
@@ -51,4 +55,33 @@ test('parseArgs rejects missing path option values', () => {
 
 test('parseArgs rejects another flag as a path value', () => {
   assert.throws(() => parseArgs(['doctor', '--claude-dir', '--json']), /--claude-dir 需要路径参数/);
+});
+
+test('run saves generated translations from stdin', async () => {
+  const claudeDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cccn-cli-save-'));
+  let output = '';
+
+  const code = await run(
+    ['save-generated-translations', '--claude-dir', claudeDir],
+    {
+      stdin: Readable.from([JSON.stringify({
+        version: 1,
+        translations: {
+          'demo-plugin/demo-skill': '生成的中文描述',
+        },
+      })]),
+      stdout: { write: (chunk) => { output += chunk; } },
+      stderr: { write: () => {} },
+    }
+  );
+
+  const generatedPath = path.join(claudeDir, 'localize-generated-translations.json');
+  const stored = JSON.parse(fs.readFileSync(generatedPath, 'utf8'));
+
+  assert.equal(code, 0);
+  assert.equal(stored.version, 1);
+  assert.deepEqual(stored.translations, {
+    'demo-plugin/demo-skill': '生成的中文描述',
+  });
+  assert.match(output, /已保存本地生成翻译: count=1/);
 });

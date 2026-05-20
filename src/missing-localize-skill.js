@@ -3,7 +3,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-const { generatedTranslationsPathFor, missingTranslationsPathFor } = require('./plugin-localizer');
+const { missingTranslationsPathFor } = require('./plugin-localizer');
 
 function skillDirFor(claudeDir) {
   return path.join(claudeDir, 'skills', 'cccn-localize-missing');
@@ -38,16 +38,23 @@ function buildCommands(options) {
     '--install-dir',
     JSON.stringify(options.installDir),
   ]);
+  const saveCommand = nodeCommand(cliPath, [
+    'save-generated-translations',
+    '--claude-dir',
+    JSON.stringify(options.claudeDir),
+    '--install-dir',
+    JSON.stringify(options.installDir),
+  ]);
   const allowedTools = [
     `Bash(node ${JSON.stringify(cliPath)} scan-missing *)`,
+    `Bash(node ${JSON.stringify(cliPath)} save-generated-translations *)`,
     `Bash(node ${JSON.stringify(cliPath)} apply-generated-translations *)`,
   ].join(' ');
-  return { allowedTools, applyCommand, scanCommand };
+  return { allowedTools, applyCommand, saveCommand, scanCommand };
 }
 
 function buildInstructions(options) {
-  const { applyCommand, scanCommand } = buildCommands(options);
-  const generatedPath = generatedTranslationsPathFor(options.claudeDir);
+  const { applyCommand, saveCommand, scanCommand } = buildCommands(options);
   const missingPath = missingTranslationsPathFor(options.claudeDir);
 
   return [
@@ -75,7 +82,19 @@ function buildInstructions(options) {
     '}',
     '```',
     '',
-    `5. 将这个 JSON 写入 \`${generatedPath}\`。`,
+    '5. 不要直接使用 Write/Edit 工具保存翻译。必须用允许的 Bash 命令把 JSON 通过 stdin 传给保存命令：',
+    '',
+    '```bash',
+    `${saveCommand} <<'JSON'`,
+    '{',
+    '  "version": 1,',
+    '  "translations": {',
+    '    "<missing key>": "<中文描述>"',
+    '  }',
+    '}',
+    'JSON',
+    '```',
+    '',
     `6. 写入后运行：\`${applyCommand}\`。`,
     '7. 最后用中文简短告诉用户补全了多少项，以及是否还有缺失项。',
     '',

@@ -56,13 +56,21 @@ test('install patches legacy CLI, installs hooks, language config, and install p
 
   const skillPath = path.join(env.claudeDir, 'skills', 'cccn-localize-missing', 'SKILL.md');
   assert.equal(fs.existsSync(skillPath), true);
-  assert.match(fs.readFileSync(skillPath, 'utf8'), /cccn-localize-missing/);
-  assert.match(fs.readFileSync(skillPath, 'utf8'), /scan-missing --json/);
+  const skillContent = fs.readFileSync(skillPath, 'utf8');
+  assert.match(skillContent, /cccn-localize-missing/);
+  assert.match(skillContent, /scan-missing --json/);
+  assert.match(skillContent, /save-generated-translations/);
+  assert.match(skillContent, /save-generated-translations[^\n]*<<'JSON'/);
+  assert.doesNotMatch(skillContent, /cat <<'JSON' \|/);
 
   const commandPath = path.join(env.claudeDir, 'commands', 'cccn-localize-missing.md');
   assert.equal(fs.existsSync(commandPath), true);
-  assert.match(fs.readFileSync(commandPath, 'utf8'), /scan-missing --json/);
-  assert.match(fs.readFileSync(commandPath, 'utf8'), /apply-generated-translations/);
+  const commandContent = fs.readFileSync(commandPath, 'utf8');
+  assert.match(commandContent, /scan-missing --json/);
+  assert.match(commandContent, /save-generated-translations/);
+  assert.match(commandContent, /save-generated-translations[^\n]*<<'JSON'/);
+  assert.doesNotMatch(commandContent, /cat <<'JSON' \|/);
+  assert.match(commandContent, /apply-generated-translations/);
 });
 
 test('install returns failure after native patch rollback but keeps non-CLI features', async () => {

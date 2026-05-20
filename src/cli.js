@@ -3,7 +3,7 @@
 const { localizeAuto } = require('./auto-localize');
 const { runDoctor } = require('./doctor');
 const { defaultClaudeDir, defaultInstallDir, defaultMemoryPath, install, restoreCli, uninstall } = require('./installer');
-const { generatedTranslationsPathFor, localizePluginDescriptions, scanMissingPluginDescriptions } = require('./plugin-localizer');
+const { generatedTranslationsPathFor, localizePluginDescriptions, saveGeneratedTranslations, scanMissingPluginDescriptions } = require('./plugin-localizer');
 
 function readPathOption(argv, index, flag) {
   const value = argv[index + 1];
@@ -75,6 +75,7 @@ function printHelp(io) {
     '  doctor               检查安装状态',
     '  localize --auto      供自动维护 hook 调用',
     '  scan-missing         扫描缺失的插件/技能/命令描述翻译',
+    '  save-generated-translations  从 stdin 保存 Claude Code 生成的翻译缓存',
     '  apply-generated-translations  应用 Claude Code 生成的本地翻译缓存',
     '  restore              只恢复 Claude Code CLI',
     '',
@@ -84,6 +85,16 @@ function printHelp(io) {
     '  --install-dir <path>',
     '  --verbose',
   ].join('\n') + '\n');
+}
+
+function readAllStdin(stream) {
+  return new Promise((resolve, reject) => {
+    let input = '';
+    stream.setEncoding('utf8');
+    stream.on('data', (chunk) => { input += chunk; });
+    stream.on('end', () => resolve(input));
+    stream.on('error', reject);
+  });
 }
 
 async function run(argv = process.argv.slice(2), io = { stdout: process.stdout, stderr: process.stderr }) {
@@ -149,6 +160,14 @@ async function run(argv = process.argv.slice(2), io = { stdout: process.stdout, 
     } else {
       io.stdout.write('没有发现缺失的描述翻译。\n');
     }
+    return 0;
+  }
+
+  if (command === 'save-generated-translations') {
+    const input = await readAllStdin(io.stdin || process.stdin);
+    const payload = JSON.parse(input);
+    const result = saveGeneratedTranslations(options, payload);
+    io.stdout.write(`已保存本地生成翻译: count=${result.count} ${result.path}\n`);
     return 0;
   }
 

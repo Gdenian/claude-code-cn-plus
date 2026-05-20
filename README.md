@@ -1,8 +1,39 @@
-# Claude Code CN Plus
+<h1 align="center">Claude Code CN Plus</h1>
 
-Claude Code 中文汉化增强包。
+<p align="center">
+  <strong>Claude Code 中文汉化增强包</strong>
+</p>
 
-它不是另一个 Claude Code，而是在你已经安装好的 Claude Code 上加一层中文体验：常见界面、按钮、命令说明、插件描述、工具提示会变成中文，并让 Claude 默认用中文回复。
+<p align="center">
+  <a href="#最快安装">快速安装</a>
+  ·
+  <a href="#你会得到什么">功能亮点</a>
+  ·
+  <a href="#常见问题">常见问题</a>
+  ·
+  <a href="#给开发者">开发者说明</a>
+</p>
+
+<p align="center">
+  <img alt="Node.js 20+" src="https://img.shields.io/badge/Node.js-20%2B-339933">
+  <img alt="三端可用" src="https://img.shields.io/badge/%E4%B8%89%E7%AB%AF%E5%8F%AF%E7%94%A8-macOS%20%7C%20Linux%20%7C%20Windows-2563eb">
+  <img alt="中文体验" src="https://img.shields.io/badge/%E4%B8%AD%E6%96%87%E4%BD%93%E9%AA%8C-%E5%BC%80%E7%AE%B1%E5%8D%B3%E7%94%A8-d946ef">
+  <img alt="License MIT" src="https://img.shields.io/badge/License-MIT-111827">
+</p>
+
+> 让 Claude Code 对中文用户更友好：界面说明、按钮提示、插件描述、工具提示尽量变成中文，并让 Claude 默认用中文回复。
+
+它不是另一个 Claude Code，而是在你已经安装好的 Claude Code 上加一层中文体验。安装完成后，你仍然使用原来的 Claude Code，只是更容易看懂、更容易上手。
+
+## 核心亮点
+
+| 亮点 | 对你有什么用 |
+|------|--------------|
+| 三端可用 | 支持 macOS、Linux、Windows 终端环境；Windows 推荐使用 WSL 或 Git Bash |
+| 一键安装 | 复制一条命令就能安装，也可以直接让 Claude Code 帮你操作 |
+| 中文优先 | 常见界面、命令说明、插件描述、工具提示都会尽量中文化 |
+| 自动维护 | Claude Code 或插件更新后，会自动检查是否需要重新汉化 |
+| 可恢复 | 安装前会备份，想卸载时可以尽量恢复原版 Claude Code |
 
 适合这些用户：
 
@@ -59,6 +90,8 @@ node ~/.claude-code-cn-plus/bin/cccn.js doctor
 1. 你的电脑已经能正常打开 Claude Code。
 2. 你的电脑已经安装 Node.js 20 或更高版本。
 
+macOS 和 Linux 用户可以直接在系统终端执行安装命令。Windows 用户建议在 WSL 或 Git Bash 里执行安装命令。
+
 不知道 Node.js 有没有装，可以在终端输入：
 
 ```bash
@@ -77,6 +110,7 @@ node -v
 | 插件说明汉化 | 把插件和技能的描述改成中文，更容易知道该用哪个能力 |
 | 工具提示 | Claude Code 执行工具后，用中文解释刚刚发生了什么 |
 | 默认中文回复 | 自动写入语言配置，让 Claude 优先用中文回答 |
+| 三端可用 | macOS、Linux、Windows 终端环境都可以使用 |
 | 自动维护 | Claude Code 或插件更新后，自动检查是否需要重新汉化 |
 | 可恢复 | 安装前会备份，想卸载或恢复原版时可以撤回 |
 

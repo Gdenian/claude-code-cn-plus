@@ -36,6 +36,7 @@ async function runDoctor(options = {}) {
     homeDir: options.homeDir,
     projectDir: options.projectDir,
     dryRun: options.dryRun,
+    writeMissing: false,
   });
   const node = { ok: isNode20Plus(options.nodeVersion), version: options.nodeVersion || process.versions.node };
   const ok = Boolean(

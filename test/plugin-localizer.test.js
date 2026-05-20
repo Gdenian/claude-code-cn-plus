@@ -209,3 +209,20 @@ test('localizePluginDescriptions uses generated translations as a fallback', () 
   assert.equal(result.missing, 0);
   assert.equal(readField(content, 'description'), '生成的中文描述');
 });
+
+test('scanMissingPluginDescriptions can run without writing missing file', () => {
+  const fixture = makeTempClaudeDir();
+  const memoryPath = path.join(fixture.claudeDir, 'translation-memory.json');
+  const missingPath = missingTranslationsPathFor(fixture.claudeDir);
+  writeMemory(memoryPath, {});
+
+  const result = scanMissingPluginDescriptions({
+    claudeDir: fixture.claudeDir,
+    memoryPath,
+    writeMissing: false,
+  });
+
+  assert.equal(result.missing, 1);
+  assert.equal(result.missingPath, missingPath);
+  assert.equal(fs.existsSync(missingPath), false);
+});

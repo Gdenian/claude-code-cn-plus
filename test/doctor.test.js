@@ -67,3 +67,23 @@ test('runDoctor marks complete installation as healthy', async () => {
 
   assert.equal(report.ok, true);
 });
+
+test('runDoctor does not write missing translations file', async () => {
+  const claudeDir = makeClaudeDir();
+  const skillDir = path.join(claudeDir, 'plugins', 'cache', 'market', 'demo-plugin', '1.0.0', 'skills', 'demo');
+  fs.mkdirSync(skillDir, { recursive: true });
+  fs.writeFileSync(path.join(skillDir, 'SKILL.md'), [
+    '---',
+    'name: demo-skill',
+    'description: English desc',
+    '---',
+  ].join('\n'));
+
+  await runDoctor({
+    claudeDir,
+    installation: { kind: 'npm', path: '/tmp/cli.js', version: '1.0.0' },
+    nodeVersion: '20.0.0',
+  });
+
+  assert.equal(fs.existsSync(path.join(claudeDir, 'localize-missing-translations.json')), false);
+});

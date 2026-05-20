@@ -230,7 +230,9 @@ function scanMissingPluginDescriptions(options) {
     missingItems.push(file);
   }
 
-  const missingPath = writeMissingFile({ ...options, generatedMemoryPath }, missingItems);
+  const missingPath = options.writeMissing === false
+    ? (options.missingPath || missingTranslationsPathFor(options.claudeDir))
+    : writeMissingFile({ ...options, generatedMemoryPath }, missingItems);
   return { missing: missingItems.length, missingItems, missingPath, generatedPath: generatedMemoryPath, dryRun: Boolean(options.dryRun) };
 }
 

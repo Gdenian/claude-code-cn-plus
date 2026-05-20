@@ -36,4 +36,8 @@ jobs:
 
       - run: npm run dry-run:uninstall
 
-      - run: node bin/cccn.js doctor --claude-dir "$RUNNER_TEMP/claude"
+      - run: |
+          set +e
+          node bin/cccn.js doctor --claude-dir "$RUNNER_TEMP/claude"
+          status=$?
+          test "$status" -eq 1

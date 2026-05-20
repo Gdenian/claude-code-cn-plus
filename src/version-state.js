@@ -6,7 +6,12 @@ const path = require('node:path');
 function readPluginVersions(claudeDir) {
   const installedPath = path.join(claudeDir, 'plugins', 'installed_plugins.json');
   if (!fs.existsSync(installedPath)) return {};
-  const installed = JSON.parse(fs.readFileSync(installedPath, 'utf8'));
+  let installed;
+  try {
+    installed = JSON.parse(fs.readFileSync(installedPath, 'utf8'));
+  } catch {
+    return {};
+  }
   const versions = {};
   for (const [key, entries] of Object.entries(installed.plugins || {})) {
     if (Array.isArray(entries) && entries.length > 0) {

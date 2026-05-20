@@ -43,7 +43,12 @@ function normalizeTranslations(translations) {
 
 function loadTranslationMemory(memoryPath) {
   if (!fs.existsSync(memoryPath)) return {};
-  const parsed = JSON.parse(fs.readFileSync(memoryPath, 'utf8'));
+  let parsed;
+  try {
+    parsed = JSON.parse(fs.readFileSync(memoryPath, 'utf8'));
+  } catch {
+    return {};
+  }
   return normalizeTranslations(parsed.translations);
 }
 

@@ -27,6 +27,14 @@ test('readPluginVersions returns installed plugin versions', () => {
   assert.deepEqual(readPluginVersions(claudeDir), { demo: '3.2.1' });
 });
 
+test('readPluginVersions returns empty object for malformed installed plugins json', () => {
+  const claudeDir = makeClaudeDir();
+  const installedPath = path.join(claudeDir, 'plugins', 'installed_plugins.json');
+  fs.writeFileSync(installedPath, '{bad');
+
+  assert.deepEqual(readPluginVersions(claudeDir), {});
+});
+
 test('localizeAuto skips work when stored versions match', async () => {
   const claudeDir = makeClaudeDir();
   fs.writeFileSync(path.join(claudeDir, 'plugins', 'installed_plugins.json'), JSON.stringify({ plugins: { demo: [{ version: '3.2.1' }] } }));

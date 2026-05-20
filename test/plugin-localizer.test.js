@@ -210,6 +210,25 @@ test('localizePluginDescriptions uses generated translations as a fallback', () 
   assert.equal(readField(content, 'description'), '生成的中文描述');
 });
 
+test('localizePluginDescriptions ignores malformed generated translation memory', () => {
+  const fixture = makeTempClaudeDir();
+  const memoryPath = path.join(fixture.claudeDir, 'translation-memory.json');
+  const generatedMemoryPath = generatedTranslationsPathFor(fixture.claudeDir);
+  writeMemory(memoryPath, {});
+  fs.writeFileSync(generatedMemoryPath, '{bad');
+
+  const result = localizePluginDescriptions({
+    claudeDir: fixture.claudeDir,
+    memoryPath,
+    generatedMemoryPath,
+  });
+  const content = fs.readFileSync(fixture.skillPath, 'utf8');
+
+  assert.equal(result.patched, 0);
+  assert.equal(result.missing, 1);
+  assert.equal(readField(content, 'description'), 'English desc');
+});
+
 test('localizePluginDescriptions ignores invalid generated translation values', () => {
   const fixture = makeTempClaudeDir();
   const memoryPath = path.join(fixture.claudeDir, 'translation-memory.json');

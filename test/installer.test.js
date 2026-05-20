@@ -73,6 +73,47 @@ test('install patches legacy CLI, installs hooks, language config, and install p
   assert.match(commandContent, /apply-generated-translations/);
 });
 
+test('install succeeds when generated translations cache is malformed', async () => {
+  const env = makeEnv();
+  const installation = makeLegacyPackage(env.root);
+  fs.writeFileSync(path.join(env.claudeDir, 'localize-generated-translations.json'), '{bad');
+
+  const result = await install({
+    yes: true,
+    claudeDir: env.claudeDir,
+    installDir: env.installDir,
+    installation,
+    translations: { 'Hello world': '你好世界' },
+    extraTranslations: {},
+    memoryPath: path.join(env.installDir, 'missing-memory.json'),
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(fs.readFileSync(installation.path, 'utf8'), 'const label = "你好世界";');
+  assert.equal(fs.existsSync(path.join(env.claudeDir, 'localize-manifest.json')), true);
+});
+
+test('install succeeds with empty plugin manifest when installed plugins json is malformed', async () => {
+  const env = makeEnv();
+  const installation = makeLegacyPackage(env.root);
+  fs.mkdirSync(path.join(env.claudeDir, 'plugins'), { recursive: true });
+  fs.writeFileSync(path.join(env.claudeDir, 'plugins', 'installed_plugins.json'), '{bad');
+
+  const result = await install({
+    yes: true,
+    claudeDir: env.claudeDir,
+    installDir: env.installDir,
+    installation,
+    translations: { 'Hello world': '你好世界' },
+    extraTranslations: {},
+    memoryPath: path.join(env.installDir, 'missing-memory.json'),
+  });
+  const manifest = JSON.parse(fs.readFileSync(path.join(env.claudeDir, 'localize-manifest.json'), 'utf8'));
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(manifest.plugins, {});
+});
+
 test('install does not patch CLI when settings json is invalid', async () => {
   const env = makeEnv();
   const installation = makeLegacyPackage(env.root);

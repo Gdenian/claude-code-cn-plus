@@ -3,27 +3,29 @@ const assert = require('node:assert/strict');
 
 const { buildBootstrapPlan } = require('../src/bootstrap-plan');
 
-test('buildBootstrapPlan uses fixed stable tag and default install dir', () => {
+test('buildBootstrapPlan defaults to main branch and default install dir', () => {
   const plan = buildBootstrapPlan({
     env: { HOME: '/home/me' },
     cwd: '/tmp/curl',
     currentSource: false,
   });
 
-  assert.equal(plan.channel, 'stable');
+  assert.equal(plan.channel, 'main');
   assert.equal(plan.version, 'v0.1.0');
   assert.equal(plan.installDir, '/home/me/.claude-code-cn-plus');
-  assert.match(plan.archiveUrl, /\/refs\/tags\/v0\.1\.0\.tar\.gz$/);
+  assert.match(plan.archiveUrl, /\/refs\/heads\/main\.tar\.gz$/);
   assert.equal(plan.usesCurrentSource, false);
 });
 
-test('buildBootstrapPlan supports CHANNEL=main and VERSION override', () => {
-  const main = buildBootstrapPlan({
-    env: { HOME: '/home/me', CHANNEL: 'main' },
+test('buildBootstrapPlan supports explicit CHANNEL=stable and VERSION override', () => {
+  const stable = buildBootstrapPlan({
+    env: { HOME: '/home/me', CHANNEL: 'stable', VERSION: 'v9.9.9' },
     cwd: '/tmp/curl',
     currentSource: false,
   });
-  assert.match(main.archiveUrl, /\/refs\/heads\/main\.tar\.gz$/);
+  assert.equal(stable.channel, 'stable');
+  assert.equal(stable.version, 'v9.9.9');
+  assert.match(stable.archiveUrl, /\/refs\/tags\/v9\.9\.9\.tar\.gz$/);
 
   const versioned = buildBootstrapPlan({
     env: { HOME: '/home/me', VERSION: 'v9.9.9', INSTALL_DIR: '/opt/cccn' },
@@ -32,7 +34,7 @@ test('buildBootstrapPlan supports CHANNEL=main and VERSION override', () => {
   });
   assert.equal(versioned.version, 'v9.9.9');
   assert.equal(versioned.installDir, '/opt/cccn');
-  assert.match(versioned.archiveUrl, /\/refs\/tags\/v9\.9\.9\.tar\.gz$/);
+  assert.match(versioned.archiveUrl, /\/refs\/heads\/main\.tar\.gz$/);
 });
 
 test('buildBootstrapPlan uses current repository source for development runs', () => {

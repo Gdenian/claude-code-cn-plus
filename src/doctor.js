@@ -37,9 +37,18 @@ async function runDoctor(options = {}) {
     projectDir: options.projectDir,
     dryRun: options.dryRun,
   });
+  const node = { ok: isNode20Plus(options.nodeVersion), version: options.nodeVersion || process.versions.node };
+  const ok = Boolean(
+    node.ok
+    && installation
+    && hooks.toolTips
+    && hooks.autoLocalize
+    && manifest
+  );
 
   return {
-    node: { ok: isNode20Plus(options.nodeVersion), version: options.nodeVersion || process.versions.node },
+    ok,
+    node,
     installation: installation || null,
     hooks,
     pluginCache: { path: pluginCache, exists: fs.existsSync(pluginCache) },

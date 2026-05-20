@@ -104,3 +104,10 @@ content = content.replace(`"${eng}"`, `"${chn}"`)
 // 危险 — 可能替换到变量名、属性名等
 content = content.replace(eng, chn)
 ```
+
+## 9. 可靠性硬化原则
+
+- 安装器默认值必须指向当前真实存在的发布产物。README 的一键命令不能依赖尚未推送的 tag。
+- 备份文件是恢复根。重复 patch 可以更新 manifest，但不能覆盖第一次 patch 前的原始备份。
+- manifest 的写入方和读取方必须共享同一套版本状态 schema。
+- 诊断命令打印失败状态时必须返回非 0，避免 CI 或用户把失败误判为成功。

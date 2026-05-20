@@ -7,6 +7,7 @@ const path = require('node:path');
 const {
   buildAdhocPatchArgs,
   patchNativeCli,
+  restoreNativeCli,
 } = require('../src/native-patcher');
 
 function makeFixture() {
@@ -93,4 +94,38 @@ test('buildAdhocPatchArgs creates tweakcc CLI fallback arguments', () => {
       '--confirm-possible-dangerous-patch',
     ]
   );
+});
+
+test('patchNativeCli does not overwrite original native backup on repeated patches', async () => {
+  const fixture = makeFixture();
+  fs.writeFileSync(fixture.binaryPath, 'const label = "Hello world";');
+
+  const api = {
+    readContent: async (installation) => fs.readFileSync(installation.path, 'utf8'),
+    writeContent: async (installation, content) => fs.writeFileSync(installation.path, content),
+    backupFile: async (source, backup) => fs.copyFileSync(source, backup),
+    restoreBackup: async (backup, target) => fs.copyFileSync(backup, target),
+  };
+
+  const installation = { path: fixture.binaryPath, kind: 'native', version: '2.0.0' };
+  const first = await patchNativeCli({
+    installation,
+    backupDir: fixture.backupDir,
+    api,
+    translations: { 'Hello world': '你好世界' },
+  });
+
+  assert.equal(fs.readFileSync(first.backupPath, 'utf8'), 'const label = "Hello world";');
+
+  await patchNativeCli({
+    installation,
+    backupDir: fixture.backupDir,
+    api,
+    translations: { 'Hello world': '你好世界' },
+  });
+
+  assert.equal(fs.readFileSync(first.backupPath, 'utf8'), 'const label = "Hello world";');
+
+  await restoreNativeCli({ backupDir: fixture.backupDir, api });
+  assert.equal(fs.readFileSync(fixture.binaryPath, 'utf8'), 'const label = "Hello world";');
 });

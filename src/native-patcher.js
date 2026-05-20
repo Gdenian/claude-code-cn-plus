@@ -65,6 +65,10 @@ function writeManifest(manifestPath, manifest) {
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
 }
 
+function backupExists(backupPath) {
+  return fs.existsSync(backupPath);
+}
+
 async function patchWithApi(options, api, installation, backupDir, translations) {
   const backupPath = backupPathForNative(backupDir, installation.path);
   const manifestPath = manifestPathFor(backupDir);
@@ -86,7 +90,9 @@ async function patchWithApi(options, api, installation, backupDir, translations)
   if (options.dryRun) return result;
 
   fs.mkdirSync(backupDir, { recursive: true });
-  await api.backupFile(installation.path, backupPath);
+  if (!backupExists(backupPath)) {
+    await api.backupFile(installation.path, backupPath);
+  }
   try {
     await api.writeContent(installation, report.content);
   } catch (error) {
@@ -136,7 +142,9 @@ function patchWithCli(options, installation, backupDir, translations) {
   }
 
   fs.mkdirSync(backupDir, { recursive: true });
-  fs.copyFileSync(installation.path, backupPath);
+  if (!backupExists(backupPath)) {
+    fs.copyFileSync(installation.path, backupPath);
+  }
   fs.writeFileSync(scriptPath, createAdhocPatchScript(translations), 'utf8');
 
   const run = childProcess.spawnSync(command, args, { encoding: 'utf8' });

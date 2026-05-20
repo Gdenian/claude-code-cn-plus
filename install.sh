@@ -9,7 +9,7 @@ NC='\033[0m'
 
 DEFAULT_VERSION="v0.1.0"
 REPO_URL="${REPO_URL:-https://github.com/Gdenian/claude-code-cn-plus}"
-CHANNEL="${CHANNEL:-stable}"
+CHANNEL="${CHANNEL:-main}"
 VERSION="${VERSION:-$DEFAULT_VERSION}"
 DRY_RUN="${DRY_RUN:-0}"
 

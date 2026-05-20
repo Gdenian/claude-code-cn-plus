@@ -296,9 +296,16 @@ npm run check
 
 ```bash
 VERSION=v0.1.0
-CHANNEL=stable   # 或 main
+CHANNEL=main     # 或 stable
 INSTALL_DIR=~/.claude-code-cn-plus
 DRY_RUN=1
+```
+
+默认安装脚本会下载 `main` 分支，避免在正式 tag 发布前出现 stable 包不存在的问题。
+如果你已经发布了 tag，可以显式指定：
+
+```bash
+CHANNEL=stable VERSION=v0.1.0 bash install.sh
 ```
 
 主要目录：

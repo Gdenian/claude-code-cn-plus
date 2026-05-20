@@ -14,7 +14,7 @@ function buildArchiveUrl(repoUrl, channel, version) {
 function buildBootstrapPlan(options) {
   const env = options.env || process.env;
   const currentSource = Boolean(options.currentSource);
-  const channel = env.CHANNEL || 'stable';
+  const channel = env.CHANNEL || 'main';
   const version = env.VERSION || DEFAULT_VERSION;
   const repoUrl = env.REPO_URL || DEFAULT_REPO_URL;
   const home = env.HOME || env.USERPROFILE || '';

@@ -43,3 +43,27 @@ test('runDoctor reports hooks, plugin cache, backups, and manifest status', asyn
   assert.equal(report.backups.exists, true);
   assert.equal(report.manifest.exists, true);
 });
+
+test('runDoctor marks empty installation as unhealthy', async () => {
+  const claudeDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cccn-doctor-empty-'));
+
+  const report = await runDoctor({
+    claudeDir,
+    installation: null,
+    nodeVersion: '20.0.0',
+  });
+
+  assert.equal(report.ok, false);
+});
+
+test('runDoctor marks complete installation as healthy', async () => {
+  const claudeDir = makeClaudeDir();
+
+  const report = await runDoctor({
+    claudeDir,
+    installation: { kind: 'npm', path: '/tmp/cli.js', version: '1.0.0' },
+    nodeVersion: '20.0.0',
+  });
+
+  assert.equal(report.ok, true);
+});

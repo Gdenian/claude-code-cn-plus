@@ -5,6 +5,14 @@ const { runDoctor } = require('./doctor');
 const { defaultClaudeDir, defaultInstallDir, defaultMemoryPath, install, restoreCli, uninstall } = require('./installer');
 const { generatedTranslationsPathFor, localizePluginDescriptions, scanMissingPluginDescriptions } = require('./plugin-localizer');
 
+function readPathOption(argv, index, flag) {
+  const value = argv[index + 1];
+  if (!value || value.startsWith('--')) {
+    throw new Error(`${flag} 需要路径参数`);
+  }
+  return value;
+}
+
 function parseArgs(argv) {
   const command = argv[0] || 'help';
   const options = {};
@@ -16,13 +24,13 @@ function parseArgs(argv) {
     else if (arg === '--auto') options.auto = true;
     else if (arg === '--json') options.json = true;
     else if (arg === '--claude-dir') {
-      options.claudeDir = argv[index + 1];
+      options.claudeDir = readPathOption(argv, index, arg);
       index += 1;
     } else if (arg === '--install-dir') {
-      options.installDir = argv[index + 1];
+      options.installDir = readPathOption(argv, index, arg);
       index += 1;
     } else if (arg === '--project-dir') {
-      options.projectDir = argv[index + 1];
+      options.projectDir = readPathOption(argv, index, arg);
       index += 1;
     } else {
       throw new Error(`未知参数: ${arg}`);
@@ -116,7 +124,7 @@ async function run(argv = process.argv.slice(2), io = { stdout: process.stdout, 
   if (command === 'doctor') {
     const report = await runDoctor(options);
     printDoctor(report, io);
-    return report.node.ok ? 0 : 1;
+    return report.ok ? 0 : 1;
   }
 
   if (command === 'scan-missing') {

@@ -42,3 +42,13 @@ test('parseArgs parses scan-missing json mode', () => {
     }
   );
 });
+
+test('parseArgs rejects missing path option values', () => {
+  assert.throws(() => parseArgs(['doctor', '--claude-dir']), /--claude-dir 需要路径参数/);
+  assert.throws(() => parseArgs(['install', '--install-dir']), /--install-dir 需要路径参数/);
+  assert.throws(() => parseArgs(['scan-missing', '--project-dir']), /--project-dir 需要路径参数/);
+});
+
+test('parseArgs rejects another flag as a path value', () => {
+  assert.throws(() => parseArgs(['doctor', '--claude-dir', '--json']), /--claude-dir 需要路径参数/);
+});

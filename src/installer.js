@@ -12,6 +12,7 @@ const { patchNativeCli, restoreNativeCli, manifestPathFor: nativeManifestPathFor
 const { localizePluginDescriptions } = require('./plugin-localizer');
 const { installMissingLocalizeSkill, uninstallMissingLocalizeSkill } = require('./missing-localize-skill');
 const { removeManifest, writeManifest } = require('./manifest');
+const { currentVersionState } = require('./version-state');
 
 function defaultClaudeDir() {
   return process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
@@ -101,8 +102,11 @@ async function install(options = {}) {
   installHooks({ claudeDir, installDir, dryRun });
   installMissingLocalizeSkill({ claudeDir, installDir, dryRun });
   configureChineseLanguage({ claudeDir, dryRun });
+  const versionState = currentVersionState(claudeDir, installation);
   writeManifest(claudeDir, {
     lastCheck: new Date().toISOString(),
+    cliVersion: versionState.cliVersion,
+    plugins: versionState.plugins,
     installation,
     cli: cliResult,
     plugin: pluginResult,

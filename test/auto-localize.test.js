@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
+const { install } = require('../src/installer');
 const { localizeAuto, readPluginVersions, versionsChanged } = require('../src/auto-localize');
 
 function makeClaudeDir() {
@@ -40,4 +41,51 @@ test('localizeAuto skips work when stored versions match', async () => {
   });
 
   assert.equal(result.changed, false);
+});
+
+test('localizeAuto skips immediately after install writes manifest', async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'cccn-auto-install-'));
+  const claudeDir = path.join(root, '.claude');
+  const installDir = path.join(root, 'app');
+  const binaryPath = path.join(root, 'claude');
+  fs.mkdirSync(claudeDir, { recursive: true });
+  fs.mkdirSync(installDir, { recursive: true });
+  fs.writeFileSync(binaryPath, 'native-binary');
+
+  let readContentCount = 0;
+  const api = {
+    readContent: async () => {
+      readContentCount += 1;
+      return 'const label = "Hello world";';
+    },
+    writeContent: async () => {},
+    backupFile: async (source, backup) => fs.copyFileSync(source, backup),
+    restoreBackup: async (backup, target) => fs.copyFileSync(backup, target),
+  };
+  const installation = { kind: 'native', path: binaryPath, version: '2.0.0' };
+
+  await install({
+    claudeDir,
+    installDir,
+    installation,
+    tweakccApi: api,
+    translations: { 'Hello world': '你好世界' },
+    extraTranslations: {},
+    memoryPath: path.join(installDir, 'translation-memory.json'),
+  });
+  readContentCount = 0;
+
+  const result = await localizeAuto({
+    claudeDir,
+    installDir,
+    installation,
+    tweakccApi: api,
+    translations: { 'Hello world': '你好世界' },
+    extraTranslations: {},
+    memoryPath: path.join(installDir, 'translation-memory.json'),
+    dryRun: true,
+  });
+
+  assert.equal(result.changed, false);
+  assert.equal(readContentCount, 0);
 });

@@ -50,6 +50,10 @@ test('install patches legacy CLI, installs hooks, language config, and install p
   assert.equal(settings.language, 'chinese');
   assert.equal(settings.hooks.PostToolUse.length, 2);
 
+  const manifest = JSON.parse(fs.readFileSync(path.join(env.claudeDir, 'localize-manifest.json'), 'utf8'));
+  assert.equal(manifest.cliVersion, '1.0.0');
+  assert.deepEqual(manifest.plugins, {});
+
   const skillPath = path.join(env.claudeDir, 'skills', 'cccn-localize-missing', 'SKILL.md');
   assert.equal(fs.existsSync(skillPath), true);
   assert.match(fs.readFileSync(skillPath, 'utf8'), /cccn-localize-missing/);

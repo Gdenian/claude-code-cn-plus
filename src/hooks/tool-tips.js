@@ -27,7 +27,7 @@ function redactCommand(command) {
   return String(command || '')
     .replace(/(authorization:\s*bearer\s+)[^\s"']+/ig, '$1[REDACTED]')
     .replace(/([?&](?:api_key|key|token|access_token)=)[^&\s"']+/ig, '$1[REDACTED]')
-    .replace(/\b([A-Z0-9_]*(?:API_KEY|TOKEN|SECRET|PASSWORD)=)("[^"]*"|'[^']*'|[^\s"']+)/g, '$1[REDACTED]')
+    .replace(/\b([A-Z0-9_]*(?:API_KEY|TOKEN|SECRET|PASSWORD)=)("[^"]*"|'[^']*'|[^\s"']+)/ig, '$1[REDACTED]')
     .replace(/\b(?:sk|pk|rk)-[A-Za-z0-9_-]{8,}\b/g, '[REDACTED]');
 }
 

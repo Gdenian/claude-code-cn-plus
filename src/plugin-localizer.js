@@ -206,6 +206,9 @@ function saveGeneratedTranslations(options, payload) {
   if (!payload || payload.version !== 1 || !translations || typeof translations !== 'object' || Array.isArray(translations)) {
     throw new Error('生成翻译 JSON 必须包含 version=1 和 translations 对象');
   }
+  if (Object.entries(translations).some(([key, value]) => key.length === 0 || typeof value !== 'string')) {
+    throw new Error('生成翻译 JSON 的 translations 必须是字符串键值对');
+  }
 
   const generatedPath = options.generatedMemoryPath || generatedTranslationsPathFor(options.claudeDir);
   const data = { version: 1, translations };

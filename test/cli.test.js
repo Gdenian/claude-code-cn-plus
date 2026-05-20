@@ -85,3 +85,26 @@ test('run saves generated translations from stdin', async () => {
   });
   assert.match(output, /已保存本地生成翻译: count=1/);
 });
+
+test('run rejects generated translations with non-string values', async () => {
+  const claudeDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cccn-cli-save-invalid-'));
+
+  await assert.rejects(
+    run(
+      ['save-generated-translations', '--claude-dir', claudeDir],
+      {
+        stdin: Readable.from([JSON.stringify({
+          version: 1,
+          translations: {
+            'demo-plugin/demo-skill': { text: '中文描述' },
+          },
+        })]),
+        stdout: { write: () => {} },
+        stderr: { write: () => {} },
+      }
+    ),
+    /字符串键值对/
+  );
+
+  assert.equal(fs.existsSync(path.join(claudeDir, 'localize-generated-translations.json')), false);
+});

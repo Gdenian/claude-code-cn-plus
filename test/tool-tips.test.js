@@ -32,6 +32,17 @@ test('redactCommand hides quoted environment secret values', () => {
   assert.match(redacted, /TOKEN=\[REDACTED\]/);
 });
 
+test('redactCommand hides lowercase environment secret names', () => {
+  const redacted = redactCommand('password=hunter2 openai_api_key=abc123456 github_token=ghp_secret123456');
+
+  assert.doesNotMatch(redacted, /hunter2/);
+  assert.doesNotMatch(redacted, /abc123456/);
+  assert.doesNotMatch(redacted, /ghp_secret123456/);
+  assert.match(redacted, /password=\[REDACTED\]/);
+  assert.match(redacted, /openai_api_key=\[REDACTED\]/);
+  assert.match(redacted, /github_token=\[REDACTED\]/);
+});
+
 test('getTip redacts bash command before printing', () => {
   const tip = getTip({
     tool_name: 'Bash',

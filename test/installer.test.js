@@ -114,6 +114,28 @@ test('install succeeds with empty plugin manifest when installed plugins json is
   assert.deepEqual(manifest.plugins, {});
 });
 
+test('install records unknown version for malformed installed plugin entries', async () => {
+  const env = makeEnv();
+  const installation = makeLegacyPackage(env.root);
+  fs.mkdirSync(path.join(env.claudeDir, 'plugins'), { recursive: true });
+  fs.writeFileSync(path.join(env.claudeDir, 'plugins', 'installed_plugins.json'), JSON.stringify({ plugins: { demo: [null] } }));
+
+  const result = await install({
+    yes: true,
+    claudeDir: env.claudeDir,
+    installDir: env.installDir,
+    installation,
+    translations: { 'Hello world': '你好世界' },
+    extraTranslations: {},
+    memoryPath: path.join(env.installDir, 'missing-memory.json'),
+  });
+  const manifest = JSON.parse(fs.readFileSync(path.join(env.claudeDir, 'localize-manifest.json'), 'utf8'));
+
+  assert.equal(result.ok, true);
+  assert.equal(fs.existsSync(path.join(env.claudeDir, 'localize-manifest.json')), true);
+  assert.deepEqual(manifest.plugins, { demo: 'unknown' });
+});
+
 test('install does not patch CLI when settings json is invalid', async () => {
   const env = makeEnv();
   const installation = makeLegacyPackage(env.root);

@@ -27,6 +27,14 @@ test('readPluginVersions returns installed plugin versions', () => {
   assert.deepEqual(readPluginVersions(claudeDir), { demo: '3.2.1' });
 });
 
+test('readPluginVersions tolerates malformed plugin entries', () => {
+  const claudeDir = makeClaudeDir();
+  const installedPath = path.join(claudeDir, 'plugins', 'installed_plugins.json');
+  fs.writeFileSync(installedPath, JSON.stringify({ plugins: { demo: [null], ok: [{ version: '1.2.3' }] } }));
+
+  assert.deepEqual(readPluginVersions(claudeDir), { demo: 'unknown', ok: '1.2.3' });
+});
+
 test('readPluginVersions returns empty object for malformed installed plugins json', () => {
   const claudeDir = makeClaudeDir();
   const installedPath = path.join(claudeDir, 'plugins', 'installed_plugins.json');

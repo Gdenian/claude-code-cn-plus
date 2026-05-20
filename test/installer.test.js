@@ -73,6 +73,28 @@ test('install patches legacy CLI, installs hooks, language config, and install p
   assert.match(commandContent, /apply-generated-translations/);
 });
 
+test('install does not patch CLI when settings json is invalid', async () => {
+  const env = makeEnv();
+  const installation = makeLegacyPackage(env.root);
+  fs.writeFileSync(path.join(env.claudeDir, 'settings.json'), '{bad');
+
+  await assert.rejects(
+    () => install({
+      yes: true,
+      claudeDir: env.claudeDir,
+      installDir: env.installDir,
+      installation,
+      translations: { 'Hello world': '你好世界' },
+      extraTranslations: {},
+      memoryPath: path.join(env.installDir, 'missing-memory.json'),
+    }),
+    /settings.json 解析失败/
+  );
+
+  assert.equal(fs.readFileSync(installation.path, 'utf8'), 'const label = "Hello world";');
+  assert.equal(fs.existsSync(path.join(path.dirname(installation.path), 'cli.bak.js')), false);
+});
+
 test('install returns failure after native patch rollback but keeps non-CLI features', async () => {
   const env = makeEnv();
   const binaryPath = path.join(env.root, 'claude');

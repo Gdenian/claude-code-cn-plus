@@ -6,7 +6,7 @@ const path = require('node:path');
 
 const { detectClaudeInstallation } = require('./claude-installation');
 const { installHooks, uninstallHooks } = require('./hooks-manager');
-const { configureChineseLanguage } = require('./settings');
+const { configureChineseLanguage, readSettings } = require('./settings');
 const { patchLegacyCli, restoreLegacyCli } = require('./legacy-patcher');
 const { patchNativeCli, restoreNativeCli, manifestPathFor: nativeManifestPathFor } = require('./native-patcher');
 const { localizePluginDescriptions } = require('./plugin-localizer');
@@ -75,6 +75,7 @@ async function install(options = {}) {
   const installDir = options.installDir || defaultInstallDir();
   const dryRun = Boolean(options.dryRun);
   const installation = await detectClaudeInstallation(options);
+  readSettings(claudeDir);
   let cliResult = null;
   let cliError = null;
 

@@ -5,6 +5,7 @@ const path = require('node:path');
 
 const { detectClaudeInstallation } = require('./claude-installation');
 const { readManifest, manifestPathFor } = require('./manifest');
+const { scanMissingPluginDescriptions } = require('./plugin-localizer');
 const { readSettings } = require('./settings');
 
 function isNode20Plus(version = process.versions.node) {
@@ -28,6 +29,14 @@ async function runDoctor(options = {}) {
   const backupDir = path.join(claudeDir, 'localize-backups');
   const pluginCache = path.join(claudeDir, 'plugins', 'cache');
   const manifest = readManifest(claudeDir);
+  const missing = scanMissingPluginDescriptions({
+    claudeDir,
+    memoryPath: options.memoryPath,
+    generatedMemoryPath: options.generatedMemoryPath,
+    homeDir: options.homeDir,
+    projectDir: options.projectDir,
+    dryRun: options.dryRun,
+  });
 
   return {
     node: { ok: isNode20Plus(options.nodeVersion), version: options.nodeVersion || process.versions.node },
@@ -36,6 +45,7 @@ async function runDoctor(options = {}) {
     pluginCache: { path: pluginCache, exists: fs.existsSync(pluginCache) },
     backups: { path: backupDir, exists: fs.existsSync(backupDir) },
     manifest: { path: manifestPathFor(claudeDir), exists: Boolean(manifest), data: manifest },
+    missingTranslations: { missing: missing.missing, path: missing.missingPath, generatedPath: missing.generatedPath },
   };
 }
 

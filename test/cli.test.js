@@ -28,3 +28,17 @@ test('parseArgs parses localize --auto', () => {
     }
   );
 });
+
+test('parseArgs parses scan-missing json mode', () => {
+  assert.deepEqual(
+    parseArgs(['scan-missing', '--json', '--claude-dir', '/tmp/claude', '--install-dir', '/tmp/app']),
+    {
+      command: 'scan-missing',
+      options: {
+        json: true,
+        claudeDir: '/tmp/claude',
+        installDir: '/tmp/app',
+      },
+    }
+  );
+});

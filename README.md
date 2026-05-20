@@ -112,6 +112,7 @@ node -v
 | 插件说明汉化 | 把插件和技能的描述改成中文，更容易知道该用哪个能力 |
 | 工具提示 | Claude Code 执行工具后，用中文解释刚刚发生了什么 |
 | 默认中文回复 | 自动写入语言配置，让 Claude 优先用中文回答 |
+| 缺失翻译补全 | 新插件没覆盖时，可让 Claude Code 主动补全本机翻译缓存 |
 | 三端可用 | macOS、Linux、Windows 终端环境都可以使用 |
 | 自动维护 | Claude Code 或插件更新后，自动检查是否需要重新汉化 |
 | 可恢复 | 安装前会备份，想卸载或恢复原版时可以撤回 |
@@ -123,6 +124,12 @@ node -v
 ```bash
 # 检查安装状态
 node ~/.claude-code-cn-plus/bin/cccn.js doctor
+
+# 扫描还有哪些插件、技能、命令描述没汉化
+node ~/.claude-code-cn-plus/bin/cccn.js scan-missing
+
+# 应用 Claude Code 生成的本地翻译缓存
+node ~/.claude-code-cn-plus/bin/cccn.js apply-generated-translations
 
 # 重新安装或重新汉化
 node ~/.claude-code-cn-plus/bin/cccn.js install --yes
@@ -152,6 +159,40 @@ Claude Code 或插件更新后，部分中文可能会变回英文。
 ```bash
 node ~/.claude-code-cn-plus/bin/cccn.js install --yes
 ```
+
+## 新插件没有汉化怎么办
+
+本项目内置常见插件、技能和命令的稳定翻译包。你安装新插件后，如果仍然看到英文描述，可以先运行：
+
+```bash
+node ~/.claude-code-cn-plus/bin/cccn.js doctor
+```
+
+如果提示还有缺失翻译，请在 Claude Code 里运行：
+
+```text
+/cccn-localize-missing
+```
+
+这个命令会让 Claude Code 做 3 件事：
+
+1. 读取本机缺失清单。
+2. 把缺失的英文 `description` 翻译成中文。
+3. 写入本地缓存并自动应用。
+
+生成结果只保存在你的本机，默认路径是：
+
+```text
+~/.claude/localize-generated-translations.json
+```
+
+缺失清单默认保存在：
+
+```text
+~/.claude/localize-missing-translations.json
+```
+
+本项目不会在后台静默调用 Claude Code 或任何模型。只有你主动运行 `/cccn-localize-missing` 时，才会让 Claude Code 参与补全。
 
 ## 常见问题
 
@@ -193,6 +234,12 @@ node ~/.claude-code-cn-plus/bin/cccn.js uninstall --yes
 
 另外，插件汉化只改 frontmatter 里的 `description` 字段，不翻译 `SKILL.md` 正文。正文是给 Claude 看的行为指令，随便翻译会影响模型理解，所以这里故意不动。
 
+### 会不会偷偷消耗 token
+
+不会。默认安装、doctor、自动维护 hook 都只做本地扫描和本地替换。
+
+只有你在 Claude Code 里主动运行 `/cccn-localize-missing`，才会让 Claude Code 根据缺失清单生成翻译。
+
 ## 汉化范围
 
 当前主要覆盖：
@@ -205,15 +252,18 @@ node ~/.claude-code-cn-plus/bin/cccn.js uninstall --yes
 
 覆盖内容包括配置面板、斜杠命令、交互按钮、权限提示、插件技能说明、工具执行提示等。
 
+如果你安装了新的插件或自定义 skill，内置翻译包可能还没有覆盖。可以运行 `/cccn-localize-missing` 生成本机补全翻译。
+
 ## 它是怎么工作的
 
-简单说，安装器会做 5 件事：
+简单说，安装器会做 6 件事：
 
 1. 找到你电脑上的 Claude Code 安装位置。
 2. 备份原文件，然后把已确认安全的英文 UI 文案替换成中文。
 3. 扫描已安装插件，只汉化插件描述，不改插件正文。
 4. 写入中文语言配置，让 Claude 默认使用中文回复。
-5. 注册自动维护 hook，更新后自动检查是否需要重新汉化。
+5. 安装 `/cccn-localize-missing`，用于缺失翻译的主动补全。
+6. 注册自动维护 hook，更新后自动检查是否需要重新汉化。
 
 新版 native Claude Code 会优先通过 `tweakcc@4.0.13` 处理。旧版 npm `cli.js` 会继续走备份加字符串替换的兼容方案。
 
@@ -224,8 +274,9 @@ node ~/.claude-code-cn-plus/bin/cccn.js uninstall --yes
 - 不翻译太短、容易被代码逻辑使用的字符串，比如 `None`、`Default`
 - 不翻译插件正文，只翻译描述字段
 - 不做模糊替换，只替换翻译表里明确登记过的文本
+- 不在后台自动调用模型；缺失翻译需要你主动运行 `/cccn-localize-missing`
 - 每次 CLI 汉化前先备份，失败时尽量回滚
-- 新增翻译优先放进 `localize/translation-memory.json`
+- 稳定翻译优先放进 `localize/translation-memory.json`，个人补全翻译放进本机生成缓存
 
 更多踩坑记录见 [docs/lessons-learned.md](docs/lessons-learned.md)。
 

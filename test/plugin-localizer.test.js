@@ -5,8 +5,11 @@ const os = require('node:os');
 const path = require('node:path');
 
 const {
+  generatedTranslationsPathFor,
   localizePluginDescriptions,
+  missingTranslationsPathFor,
   readField,
+  scanMissingPluginDescriptions,
 } = require('../src/plugin-localizer');
 
 function makeTempClaudeDir() {
@@ -77,4 +80,80 @@ test('localizePluginDescriptions supports dry-run without writing files', () => 
 
   assert.equal(result.patched, 1);
   assert.equal(fs.readFileSync(fixture.skillPath, 'utf8'), before);
+});
+
+test('scanMissingPluginDescriptions includes user skills, user commands, and cc-switch skills', () => {
+  const fixture = makeTempClaudeDir();
+  const memoryPath = path.join(fixture.claudeDir, 'translation-memory.json');
+  const missingPath = missingTranslationsPathFor(fixture.claudeDir);
+  const homeDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cccn-home-'));
+  writeMemory(memoryPath, {});
+
+  const userSkillDir = path.join(fixture.claudeDir, 'skills', 'review');
+  fs.mkdirSync(userSkillDir, { recursive: true });
+  fs.writeFileSync(path.join(userSkillDir, 'SKILL.md'), [
+    '---',
+    'name: review',
+    'description: Review code changes',
+    '---',
+  ].join('\n'));
+
+  const commandDir = path.join(fixture.claudeDir, 'commands');
+  fs.mkdirSync(commandDir, { recursive: true });
+  fs.writeFileSync(path.join(commandDir, 'commit.md'), [
+    '---',
+    'description: Write a commit message',
+    '---',
+  ].join('\n'));
+
+  const ccSwitchSkillDir = path.join(homeDir, '.cc-switch', 'skills', 'new-skill');
+  fs.mkdirSync(ccSwitchSkillDir, { recursive: true });
+  fs.writeFileSync(path.join(ccSwitchSkillDir, 'SKILL.md'), [
+    '---',
+    'name: new-skill',
+    'description: Access public web sources',
+    '---',
+  ].join('\n'));
+
+  const result = scanMissingPluginDescriptions({
+    claudeDir: fixture.claudeDir,
+    memoryPath,
+    homeDir,
+    missingPath,
+  });
+
+  assert.deepEqual(
+    result.missingItems.map((item) => item.key).sort(),
+    [
+      'cc-switch-skill/new-skill',
+      'demo-plugin/demo-skill',
+      'user-command/commit',
+      'user-skill/review',
+    ].sort()
+  );
+
+  const stored = JSON.parse(fs.readFileSync(missingPath, 'utf8'));
+  assert.equal(stored.missing.length, 4);
+  assert.equal(stored.generatedPath, generatedTranslationsPathFor(fixture.claudeDir));
+});
+
+test('localizePluginDescriptions uses generated translations as a fallback', () => {
+  const fixture = makeTempClaudeDir();
+  const memoryPath = path.join(fixture.claudeDir, 'translation-memory.json');
+  const generatedMemoryPath = generatedTranslationsPathFor(fixture.claudeDir);
+  writeMemory(memoryPath, {});
+  writeMemory(generatedMemoryPath, {
+    'demo-plugin/demo-skill': '生成的中文描述',
+  });
+
+  const result = localizePluginDescriptions({
+    claudeDir: fixture.claudeDir,
+    memoryPath,
+    generatedMemoryPath,
+  });
+
+  const content = fs.readFileSync(fixture.skillPath, 'utf8');
+  assert.equal(result.patched, 1);
+  assert.equal(result.missing, 0);
+  assert.equal(readField(content, 'description'), '生成的中文描述');
 });

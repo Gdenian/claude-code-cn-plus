@@ -54,6 +54,7 @@ async function localizeAuto(options = {}) {
   const plugin = localizePluginDescriptions({
     claudeDir,
     memoryPath: options.memoryPath || defaultMemoryPath(installDir),
+    generatedMemoryPath: options.generatedMemoryPath,
     dryRun: options.dryRun,
   });
 

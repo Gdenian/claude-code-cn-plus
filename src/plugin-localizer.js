@@ -24,8 +24,41 @@ function loadTranslationMemory(memoryPath) {
   return parsed.translations || {};
 }
 
+function loadTranslationMemories(memoryPaths) {
+  const translations = {};
+  for (const memoryPath of memoryPaths.filter(Boolean)) {
+    Object.assign(translations, loadTranslationMemory(memoryPath));
+  }
+  return translations;
+}
+
+function missingTranslationsPathFor(claudeDir) {
+  return path.join(claudeDir, 'localize-missing-translations.json');
+}
+
+function generatedTranslationsPathFor(claudeDir) {
+  return path.join(claudeDir, 'localize-generated-translations.json');
+}
+
 function isCommandFile(filePath) {
   return filePath.split(path.sep).includes('commands') && filePath.endsWith('.md');
+}
+
+function pushDescriptionFile(filePath, source, keyPrefix, fallbackName, results) {
+  const content = fs.readFileSync(filePath, 'utf8');
+  const name = readField(content, 'name') || fallbackName;
+  const desc = readField(content, 'description');
+  if (!name || !desc) return;
+
+  results.push({
+    path: filePath,
+    plugin: keyPrefix,
+    source,
+    name,
+    key: `${keyPrefix}/${name}`,
+    desc,
+    isChinese: /[\u4e00-\u9fff]/.test(desc),
+  });
 }
 
 function scanRecursively(dir, plugin, results) {
@@ -39,19 +72,8 @@ function scanRecursively(dir, plugin, results) {
 
     if (entry.name !== 'SKILL.md' && !isCommandFile(fullPath)) continue;
 
-    const content = fs.readFileSync(fullPath, 'utf8');
-    let name = readField(content, 'name');
-    if (!name && isCommandFile(fullPath)) name = path.basename(entry.name, '.md');
-    const desc = readField(content, 'description');
-    if (!name || !desc) continue;
-
-    results.push({
-      path: fullPath,
-      plugin,
-      name,
-      desc,
-      isChinese: /[\u4e00-\u9fff]/.test(desc),
-    });
+    const fallbackName = isCommandFile(fullPath) ? path.basename(entry.name, '.md') : null;
+    pushDescriptionFile(fullPath, 'plugin', plugin, fallbackName, results);
   }
 }
 
@@ -69,6 +91,57 @@ function scanPluginFiles(claudeDir) {
   return results;
 }
 
+function scanUserSkills(claudeDir, results) {
+  const skillsDir = path.join(claudeDir, 'skills');
+  if (!fs.existsSync(skillsDir)) return;
+  for (const entry of fs.readdirSync(skillsDir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const skillPath = path.join(skillsDir, entry.name, 'SKILL.md');
+    if (!fs.existsSync(skillPath)) continue;
+    pushDescriptionFile(skillPath, 'user-skill', 'user-skill', entry.name, results);
+  }
+}
+
+function scanCommandFiles(rootDir, source, keyPrefix, results) {
+  const commandsDir = path.join(rootDir, 'commands');
+  if (!fs.existsSync(commandsDir)) return;
+  const visit = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        visit(fullPath);
+        continue;
+      }
+      if (!entry.name.endsWith('.md')) continue;
+      const relativeName = path.relative(commandsDir, fullPath).replace(/\\/g, '/').replace(/\.md$/, '');
+      pushDescriptionFile(fullPath, source, keyPrefix, relativeName, results);
+    }
+  };
+  visit(commandsDir);
+}
+
+function scanCcSwitchSkills(homeDir, results) {
+  const skillsDir = path.join(homeDir, '.cc-switch', 'skills');
+  if (!fs.existsSync(skillsDir)) return;
+  for (const entry of fs.readdirSync(skillsDir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const skillPath = path.join(skillsDir, entry.name, 'SKILL.md');
+    if (!fs.existsSync(skillPath)) continue;
+    pushDescriptionFile(skillPath, 'cc-switch-skill', 'cc-switch-skill', entry.name, results);
+  }
+}
+
+function scanAllDescriptionFiles(options) {
+  const results = scanPluginFiles(options.claudeDir);
+  scanUserSkills(options.claudeDir, results);
+  scanCommandFiles(options.claudeDir, 'user-command', 'user-command', results);
+  scanCcSwitchSkills(options.homeDir || os.homedir(), results);
+  if (options.projectDir) {
+    scanCommandFiles(path.join(options.projectDir, '.claude'), 'project-command', 'project-command', results);
+  }
+  return results;
+}
+
 function replaceDescription(filePath, newDescription, dryRun) {
   const content = fs.readFileSync(filePath, 'utf8');
   const current = readField(content, 'description');
@@ -81,6 +154,48 @@ function replaceDescription(filePath, newDescription, dryRun) {
   if (nextContent === content) return false;
   if (!dryRun) fs.writeFileSync(filePath, nextContent, 'utf8');
   return true;
+}
+
+function shouldIgnoreMissing(file) {
+  return file.name.endsWith('-en') || file.name.endsWith('-ja');
+}
+
+function buildMissingFilePayload(options, missingItems) {
+  return {
+    version: 1,
+    generatedPath: options.generatedMemoryPath || generatedTranslationsPathFor(options.claudeDir),
+    missing: missingItems.map((item) => ({
+      key: item.key,
+      path: item.path,
+      source: item.source,
+      name: item.name,
+      description: item.desc,
+    })),
+  };
+}
+
+function writeMissingFile(options, missingItems) {
+  const missingPath = options.missingPath || missingTranslationsPathFor(options.claudeDir);
+  if (options.dryRun) return missingPath;
+  fs.mkdirSync(path.dirname(missingPath), { recursive: true });
+  fs.writeFileSync(missingPath, JSON.stringify(buildMissingFilePayload(options, missingItems), null, 2));
+  return missingPath;
+}
+
+function scanMissingPluginDescriptions(options) {
+  const generatedMemoryPath = options.generatedMemoryPath || generatedTranslationsPathFor(options.claudeDir);
+  const translations = loadTranslationMemories([generatedMemoryPath, options.memoryPath]);
+  const extraTranslations = options.extraTranslations || buildExtraTranslations(options.claudeDir, options.homeDir);
+  const extraByPath = new Map(extraTranslations.map((item) => [item.path, item.desc]));
+  const missingItems = [];
+
+  for (const file of scanAllDescriptionFiles(options)) {
+    if (file.isChinese || translations[file.key] || extraByPath.has(file.path) || shouldIgnoreMissing(file)) continue;
+    missingItems.push(file);
+  }
+
+  const missingPath = writeMissingFile({ ...options, generatedMemoryPath }, missingItems);
+  return { missing: missingItems.length, missingItems, missingPath, generatedPath: generatedMemoryPath, dryRun: Boolean(options.dryRun) };
 }
 
 function buildExtraTranslations(claudeDir, homeDir = os.homedir()) {
@@ -105,25 +220,29 @@ function buildExtraTranslations(claudeDir, homeDir = os.homedir()) {
 
 function localizePluginDescriptions(options) {
   const claudeDir = options.claudeDir;
-  const memory = loadTranslationMemory(options.memoryPath);
+  const generatedMemoryPath = options.generatedMemoryPath || generatedTranslationsPathFor(claudeDir);
+  const memory = loadTranslationMemories([generatedMemoryPath, options.memoryPath]);
+  const extraTranslations = options.extraTranslations || buildExtraTranslations(claudeDir, options.homeDir);
+  const extraByPath = new Map(extraTranslations.map((item) => [item.path, item.desc]));
   const dryRun = Boolean(options.dryRun);
+  const missingItems = [];
   const missingKeys = [];
   let patched = 0;
   let skipped = 0;
   let missing = 0;
 
-  for (const file of scanPluginFiles(claudeDir)) {
+  for (const file of scanAllDescriptionFiles(options)) {
     if (file.isChinese) {
       skipped += 1;
       continue;
     }
 
-    const key = `${file.plugin}/${file.name}`;
-    const translation = memory[key];
+    const translation = memory[file.key] || extraByPath.get(file.path);
     if (!translation) {
-      if (!file.name.endsWith('-en') && !file.name.endsWith('-ja')) {
+      if (!shouldIgnoreMissing(file)) {
         missing += 1;
-        missingKeys.push(key);
+        missingKeys.push(file.key);
+        missingItems.push(file);
       }
       continue;
     }
@@ -133,22 +252,27 @@ function localizePluginDescriptions(options) {
     if (result === 'skip') skipped += 1;
   }
 
-  for (const item of options.extraTranslations || buildExtraTranslations(claudeDir, options.homeDir)) {
+  for (const item of extraTranslations) {
     if (!fs.existsSync(item.path)) continue;
     const result = replaceDescription(item.path, item.desc, dryRun);
     if (result === true) patched += 1;
     if (result === 'skip') skipped += 1;
   }
 
-  return { patched, skipped, missing, missingKeys, dryRun };
+  writeMissingFile({ ...options, generatedMemoryPath }, missingItems);
+  return { patched, skipped, missing, missingKeys, missingItems, dryRun };
 }
 
 module.exports = {
   buildExtraTranslations,
   escapeYamlValue,
+  generatedTranslationsPathFor,
   loadTranslationMemory,
   localizePluginDescriptions,
+  missingTranslationsPathFor,
   readField,
   replaceDescription,
+  scanAllDescriptionFiles,
   scanPluginFiles,
+  scanMissingPluginDescriptions,
 };

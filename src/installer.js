@@ -10,6 +10,7 @@ const { configureChineseLanguage } = require('./settings');
 const { patchLegacyCli, restoreLegacyCli } = require('./legacy-patcher');
 const { patchNativeCli, restoreNativeCli, manifestPathFor: nativeManifestPathFor } = require('./native-patcher');
 const { localizePluginDescriptions } = require('./plugin-localizer');
+const { installMissingLocalizeSkill, uninstallMissingLocalizeSkill } = require('./missing-localize-skill');
 const { removeManifest, writeManifest } = require('./manifest');
 
 function defaultClaudeDir() {
@@ -94,9 +95,11 @@ async function install(options = {}) {
   const pluginResult = localizePluginDescriptions({
     claudeDir,
     memoryPath: options.memoryPath || defaultMemoryPath(installDir),
+    generatedMemoryPath: options.generatedMemoryPath,
     dryRun,
   });
   installHooks({ claudeDir, installDir, dryRun });
+  installMissingLocalizeSkill({ claudeDir, installDir, dryRun });
   configureChineseLanguage({ claudeDir, dryRun });
   writeManifest(claudeDir, {
     lastCheck: new Date().toISOString(),
@@ -132,6 +135,7 @@ async function uninstall(options = {}) {
   const restored = await restoreCli({ ...options, claudeDir, dryRun, removeBackup: true });
 
   uninstallHooks({ claudeDir, dryRun });
+  uninstallMissingLocalizeSkill({ claudeDir, dryRun });
   removeManifest(claudeDir, dryRun);
   removeInstallPath(claudeDir, dryRun);
   if (!dryRun) {

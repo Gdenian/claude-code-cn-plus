@@ -2,7 +2,8 @@
 
 const { localizeAuto } = require('./auto-localize');
 const { runDoctor } = require('./doctor');
-const { defaultClaudeDir, defaultInstallDir, install, restoreCli, uninstall } = require('./installer');
+const { defaultClaudeDir, defaultInstallDir, defaultMemoryPath, install, restoreCli, uninstall } = require('./installer');
+const { generatedTranslationsPathFor, localizePluginDescriptions, scanMissingPluginDescriptions } = require('./plugin-localizer');
 
 function parseArgs(argv) {
   const command = argv[0] || 'help';
@@ -13,11 +14,15 @@ function parseArgs(argv) {
     else if (arg === '--dry-run') options.dryRun = true;
     else if (arg === '--verbose') options.verbose = true;
     else if (arg === '--auto') options.auto = true;
+    else if (arg === '--json') options.json = true;
     else if (arg === '--claude-dir') {
       options.claudeDir = argv[index + 1];
       index += 1;
     } else if (arg === '--install-dir') {
       options.installDir = argv[index + 1];
+      index += 1;
+    } else if (arg === '--project-dir') {
+      options.projectDir = argv[index + 1];
       index += 1;
     } else {
       throw new Error(`未知参数: ${arg}`);
@@ -37,6 +42,19 @@ function printDoctor(report, io) {
   io.stdout.write(`Plugin cache: ${report.pluginCache.exists ? 'OK' : 'missing'} ${report.pluginCache.path}\n`);
   io.stdout.write(`Backups: ${report.backups.exists ? 'OK' : 'missing'} ${report.backups.path}\n`);
   io.stdout.write(`Manifest: ${report.manifest.exists ? 'OK' : 'missing'} ${report.manifest.path}\n`);
+  if (report.missingTranslations) {
+    io.stdout.write(`Missing translations: ${report.missingTranslations.missing} ${report.missingTranslations.path}\n`);
+    if (report.missingTranslations.missing > 0) {
+      io.stdout.write('提示: 在 Claude Code 中运行 /cccn-localize-missing 可自动补全缺失描述。\n');
+    }
+  }
+}
+
+function printPluginHint(result, io) {
+  if (result.plugin?.missing > 0) {
+    io.stdout.write(`还有 ${result.plugin.missing} 个插件/技能/命令描述未汉化。\n`);
+    io.stdout.write('打开 Claude Code 后运行 /cccn-localize-missing 可让 Claude Code 自动补全。\n');
+  }
 }
 
 function printHelp(io) {
@@ -48,6 +66,8 @@ function printHelp(io) {
     '  uninstall --yes      卸载并恢复 CLI',
     '  doctor               检查安装状态',
     '  localize --auto      供自动维护 hook 调用',
+    '  scan-missing         扫描缺失的插件/技能/命令描述翻译',
+    '  apply-generated-translations  应用 Claude Code 生成的本地翻译缓存',
     '  restore              只恢复 Claude Code CLI',
     '',
     'Options:',
@@ -62,6 +82,8 @@ async function run(argv = process.argv.slice(2), io = { stdout: process.stdout, 
   const { command, options } = parseArgs(argv);
   options.claudeDir = options.claudeDir || defaultClaudeDir();
   options.installDir = options.installDir || defaultInstallDir();
+  options.memoryPath = options.memoryPath || defaultMemoryPath(options.installDir);
+  options.generatedMemoryPath = options.generatedMemoryPath || generatedTranslationsPathFor(options.claudeDir);
 
   if (command === 'help' || command === '--help' || command === '-h') {
     printHelp(io);
@@ -75,6 +97,7 @@ async function run(argv = process.argv.slice(2), io = { stdout: process.stdout, 
     } else {
       io.stderr.write(`CLI 汉化失败，已保留其他功能安装: ${result.error.message}\n`);
     }
+    printPluginHint(result, io);
     return result.exitCode;
   }
 
@@ -94,6 +117,40 @@ async function run(argv = process.argv.slice(2), io = { stdout: process.stdout, 
     const report = await runDoctor(options);
     printDoctor(report, io);
     return report.node.ok ? 0 : 1;
+  }
+
+  if (command === 'scan-missing') {
+    const result = scanMissingPluginDescriptions(options);
+    const payload = {
+      missing: result.missing,
+      missingPath: result.missingPath,
+      generatedPath: result.generatedPath,
+      items: result.missingItems.map((item) => ({
+        key: item.key,
+        path: item.path,
+        source: item.source,
+        name: item.name,
+        description: item.desc,
+      })),
+    };
+    if (options.json) {
+      io.stdout.write(`${JSON.stringify(payload, null, 2)}\n`);
+    } else if (result.missing > 0) {
+      io.stdout.write(`发现 ${result.missing} 个描述未汉化，缺失清单已写入 ${result.missingPath}\n`);
+      io.stdout.write('请在 Claude Code 中运行 /cccn-localize-missing 自动补全。\n');
+    } else {
+      io.stdout.write('没有发现缺失的描述翻译。\n');
+    }
+    return 0;
+  }
+
+  if (command === 'apply-generated-translations') {
+    const result = localizePluginDescriptions(options);
+    io.stdout.write(`已应用本地生成翻译: patched=${result.patched} missing=${result.missing}\n`);
+    if (result.missing > 0) {
+      io.stdout.write('仍有缺失项，可再次运行 /cccn-localize-missing 补全。\n');
+    }
+    return 0;
   }
 
   if (command === 'localize') {

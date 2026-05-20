@@ -49,6 +49,16 @@ test('install patches legacy CLI, installs hooks, language config, and install p
   const settings = JSON.parse(fs.readFileSync(path.join(env.claudeDir, 'settings.json'), 'utf8'));
   assert.equal(settings.language, 'chinese');
   assert.equal(settings.hooks.PostToolUse.length, 2);
+
+  const skillPath = path.join(env.claudeDir, 'skills', 'cccn-localize-missing', 'SKILL.md');
+  assert.equal(fs.existsSync(skillPath), true);
+  assert.match(fs.readFileSync(skillPath, 'utf8'), /cccn-localize-missing/);
+  assert.match(fs.readFileSync(skillPath, 'utf8'), /scan-missing --json/);
+
+  const commandPath = path.join(env.claudeDir, 'commands', 'cccn-localize-missing.md');
+  assert.equal(fs.existsSync(commandPath), true);
+  assert.match(fs.readFileSync(commandPath, 'utf8'), /scan-missing --json/);
+  assert.match(fs.readFileSync(commandPath, 'utf8'), /apply-generated-translations/);
 });
 
 test('install returns failure after native patch rollback but keeps non-CLI features', async () => {
@@ -133,4 +143,6 @@ test('restoreCli and uninstall restore CLI and remove hooks plus manifest files'
   assert.equal(fs.existsSync(path.join(path.dirname(installation.path), 'cli.bak.js')), false);
   assert.equal(settings.hooks, undefined);
   assert.equal(fs.existsSync(path.join(env.claudeDir, 'localize-install-path')), false);
+  assert.equal(fs.existsSync(path.join(env.claudeDir, 'skills', 'cccn-localize-missing')), false);
+  assert.equal(fs.existsSync(path.join(env.claudeDir, 'commands', 'cccn-localize-missing.md')), false);
 });

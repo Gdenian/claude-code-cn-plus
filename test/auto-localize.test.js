@@ -19,6 +19,16 @@ test('versionsChanged detects CLI or plugin version drift', () => {
   assert.equal(versionsChanged({ cliVersion: '1', plugins: { a: '2' } }, { cliVersion: '1', plugins: { a: '1' } }), true);
 });
 
+test('versionsChanged treats stable unknown plugin versions as unchanged', () => {
+  assert.equal(
+    versionsChanged(
+      { cliVersion: '1', plugins: { demo: 'unknown' } },
+      { cliVersion: '1', plugins: { demo: 'unknown' } }
+    ),
+    false
+  );
+});
+
 test('readPluginVersions returns installed plugin versions', () => {
   const claudeDir = makeClaudeDir();
   const installedPath = path.join(claudeDir, 'plugins', 'installed_plugins.json');
@@ -31,6 +41,14 @@ test('readPluginVersions tolerates malformed plugin entries', () => {
   const claudeDir = makeClaudeDir();
   const installedPath = path.join(claudeDir, 'plugins', 'installed_plugins.json');
   fs.writeFileSync(installedPath, JSON.stringify({ plugins: { demo: [null], ok: [{ version: '1.2.3' }] } }));
+
+  assert.deepEqual(readPluginVersions(claudeDir), { demo: 'unknown', ok: '1.2.3' });
+});
+
+test('readPluginVersions treats malformed version values as unknown', () => {
+  const claudeDir = makeClaudeDir();
+  const installedPath = path.join(claudeDir, 'plugins', 'installed_plugins.json');
+  fs.writeFileSync(installedPath, JSON.stringify({ plugins: { demo: [{ version: { bad: true } }], ok: [{ version: '1.2.3' }] } }));
 
   assert.deepEqual(readPluginVersions(claudeDir), { demo: 'unknown', ok: '1.2.3' });
 });

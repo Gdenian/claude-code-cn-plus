@@ -1,5 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const path = require('node:path');
 
 const { buildBootstrapPlan } = require('../src/bootstrap-plan');
 
@@ -12,7 +13,7 @@ test('buildBootstrapPlan defaults to main branch and default install dir', () =>
 
   assert.equal(plan.channel, 'main');
   assert.equal(plan.version, 'v0.1.0');
-  assert.equal(plan.installDir, '/home/me/.claude-code-cn-plus');
+  assert.equal(plan.installDir, path.join('/home/me', '.claude-code-cn-plus'));
   assert.match(plan.archiveUrl, /\/refs\/heads\/main\.tar\.gz$/);
   assert.equal(plan.usesCurrentSource, false);
 });
